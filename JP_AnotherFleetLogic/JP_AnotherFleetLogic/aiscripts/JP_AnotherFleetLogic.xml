@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<aiscript name="JP_AnotherFleetLogic" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="aiscripts.xsd" version="1">
+
+  <order id="JP_AnotherFleetLogic" name="JP AnotherFleetLogic" description="Another fleet behavior" category="combat" infinite="true">
+    <params>
+      <param name="DEBUG" text="Debug" type="bool" default="false" advanced="true"/>
+    </params>
+    <skill min="0"/>
+    <requires>
+      <match shiptype="shiptype.lasertower" negate="true"/>
+    </requires>
+  </order>
+
+  <interrupts>
+    <handler ref="SectorChangeHandler"/>
+    <handler ref="TargetInvalidHandler"/>
+    <handler ref="AttackHandler"/>
+    <handler ref="MissileLockHandler" />
+    <handler ref="ScannedHandler"/>
+    <handler ref="InspectedHandler"/>
+    <handler ref="FoundAbandonedHandler"/>
+    <handler ref="FoundLockboxHandler"/>
+    <handler ref="ResupplyHandler"/>
+    <handler ref="JobRemoveRequestHandler" />
+  </interrupts>
+
+  <init>
+    <set_value name="$Leader" exact="this.ship"/>
+    <create_list name="$AvailableSubordinates" exact="0"/>
+    <create_list name="$UnAvailableSubordinates" exact="0"/>
+    <create_list name="$EnemyShips_XS_S_M" exact="0"/>
+    <create_list name="$EnemyShips_L" exact="0"/>
+    <create_list name="$EnemyShips_XL" exact="0"/>
+
+    <do_all exact="$Leader.subordinates.count" counter="$_it">
+      <set_value name="$Subordinate" exact="$Leader.subordinates.{$_it}"/>
+      <do_if value="$Subordinate.type" list="[shiptype.smalldrone, shiptype.xsdrone]" negate="true">
+        <cancel_all_orders object="$Subordinate"/>
+        <do_if value="$Leader.isformationleader">
+          <join_formation leader="$Leader" object="$Subordinate"/>
+        </do_if>
+        <do_else>
+          <create_formation leader="$Leader" follower="$Subordinate" formation="formationshape.pointguard" param="[[$Leader.formationradius, $Subordinate.defaultformationradius.{$Leader}].max, 5km].min"/>
+        </do_else>
+        <append_to_list name="$AvailableSubordinates" exact="$Subordinate"/>
+      </do_if>
+      <remove_value name="$Subordinate"/>
+    </do_all>
+  </init>
+
+  <attention min="unknown">
+    <actions>
+
+      <set_value name="$COUNTER" exact="1"/>
+      <label name="START"/>
+      <debug_text text="'LOOP BEGIN ~~  %1\n'.[$COUNTER]"/>
+
+      <!-- DEBUG -->
+      <debug_text text="'~~~~ $UnAvailableSubordinates ~~ %1'.[$UnAvailableSubordinates.count]"/>
+      <do_all exact="$UnAvailableSubordinates.count" counter="$_it">
+        <debug_text text="'%1  ~~  %2  ~~  %3'.[$UnAvailableSubordinates.{$_it}.knownname, $UnAvailableSubordinates.{$_it}.idcode, $UnAvailableSubordinates.{$_it}.isformationwingman]"/>
+      </do_all>
+      <debug_text text="'~~~~~~~~~~\n'"/>
+
+      <debug_text text="'~~~~ $AvailableSubordinates ~~ %1'.[$AvailableSubordinates.count]"/>
+      <do_all exact="$AvailableSubordinates.count" counter="$_it">
+        <debug_text text="'%1  ~~  %2  ~~ %3'.[$AvailableSubordinates.{$_it}.knownname, $AvailableSubordinates.{$_it}.idcode, $AvailableSubordinates.{$_it}.isformationwingman]"/>
+      </do_all>
+      <debug_text text="'~~~~~~~~~~\n'"/>
+
+      <!-- Find Enemys -->
+      <find_ship space="$Leader.sector" mayattack="$Leader" multiple="true" name="$Targets"/>
+      <do_all exact="$Targets.count" counter="$_it">
+        <do_if value="$Leader.distanceto.{$Targets.{$_it}} lt $Leader.maxradarrange">
+          <do_if value="$Targets.{$_it}.class == class.ship_xs or $Targets.{$_it}.class == class.ship_s or $Targets.{$_it}.class == class.ship_m" >
+            <append_to_list name="$EnemyShips_XS_S_M" exact="$Targets.{$_it}"/>
+          </do_if>
+          <do_if value="$Targets.{$_it}.class == class.ship_l" >
+            <append_to_list name="$EnemyShips_L" exact="$Targets.{$_it}"/>
+          </do_if>
+          <do_if value="$Targets.{$_it}.class == class.ship_xl" >
+            <append_to_list name="$EnemyShips_XL" exact="$Targets.{$_it}"/>
+          </do_if>
+        </do_if>
+      </do_all>
+
+      <!-- DEBUG -->
+      <debug_text text="'Enemys found ~~ %1'.[($EnemyShips_XS_S_M.count + $EnemyShips_L.count + $EnemyShips_XL.count)]"/>
+      <do_if value="$EnemyShips_XS_S_M.count gt 0">
+        <do_all exact="$EnemyShips_XS_S_M.count" counter="$_yt">
+          <debug_text text="'%1  ~~  %2'.[$EnemyShips_XS_S_M.{$_yt}.knownname, $EnemyShips_XS_S_M.{$_yt}.idcode]"/>
+        </do_all>
+      </do_if>
+      <do_if value="$EnemyShips_L.count gt 0">
+        <do_all exact="$EnemyShips_L.count" counter="$_yt">
+          <debug_text text="'%1  ~~  %2'.[$EnemyShips_L.{$_yt}.knownname, $EnemyShips_L.{$_yt}.idcode]"/>
+        </do_all>
+      </do_if>
+      <do_if value="$EnemyShips_XL.count gt 0">
+        <do_all exact="$EnemyShips_XL.count" counter="$_yt">
+          <debug_text text="'%1  ~~  %2'.[$EnemyShips_XL.{$_yt}.knownname, $EnemyShips_XL.{$_yt}.idcode]"/>
+        </do_all>
+      </do_if>
+      <debug_text text="'~~~~~~~~~~\n'"/>
+
+      <!-- Go back in to formation when nothing to attack -->
+      <!--<create_list name="$TempList"/>
+      <do_all exact="$UnAvailableSubordinates.count" counter="$_jt">
+        <set_value name="$Subordinate" exact="$UnAvailableSubordinates.{$_jt}"/>
+        <do_if value="($Subordinate.order.id != 'Attack') and ($Subordinate.order.id != 'Undock') and ($Subordinate.order.id != 'DockAt') and ($Subordinate.order.id != 'SupplyFleet')">
+          <cancel_all_orders object="$Subordinate"/>
+          <append_to_list name="$TempList" exact="$Subordinate"/>
+        </do_if>
+      </do_all>
+      <remove_from_list name="$UnAvailableSubordinates" list="$TempList"/>
+      <append_to_list name="$AvailableSubordinates" exact="$TempList"/>
+      <remove_value name="$TempList"/>-->
+
+      <do_all exact="$AvailableSubordinates.count" counter="$_it">
+        <set_value name="$Subordinate" exact="$AvailableSubordinates.{$_it}"/>
+        <do_if value="$Subordinate.type" list="[shiptype.smalldrone, shiptype.xsdrone]" negate="true">
+          <do_if value="$Leader.isformationleader">
+            <do_if value="$Subordinate.isformationwingman" negate="true">
+              <cancel_all_orders object="$Subordinate"/>
+              <join_formation leader="$Leader" object="$Subordinate"/>
+            </do_if>
+          </do_if>
+          <do_else>
+            <create_formation leader="$Leader" follower="$Subordinate" formation="formationshape.pointguard" param="[[$Leader.formationradius, $Subordinate.defaultformationradius.{$Leader}].max, 5km].min"/>
+          </do_else>
+        </do_if>
+        <remove_value name="$Subordinate"/>
+      </do_all>
+
+      <debug_text text="'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'"/>
+      <debug_text text="'LOOP END ~~  %1\n'.[$COUNTER]"/>
+      <show_help custom="'LOOP END ~~  %1'.[$COUNTER]" duration="4s"/>
+
+      <set_value operation="add" name="$COUNTER" exact="1"/>
+      <wait exact="10000ms"/>
+      <resume label="START"/>
+
+      <!--<do_if value="$COUNTER lt 2">
+        <set_value operation="add" name="$COUNTER" exact="1"/>
+        <wait exact="1000ms"/>
+        <resume label="START"/>
+      </do_if>-->
+
+      <label name="FINISH"/>
+      <wait exact="100ms"/>
+      <set_order_syncpoint_reached order="this.ship.order"/>
+      <cancel_order order="this.ship.order" />
+
+    </actions>
+  </attention>
+
+</aiscript>

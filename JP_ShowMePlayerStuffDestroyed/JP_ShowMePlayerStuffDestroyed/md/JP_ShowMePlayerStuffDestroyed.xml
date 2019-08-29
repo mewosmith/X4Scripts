@@ -1,0 +1,48 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<mdscript name="JP_ShowMePlayerStuffDestroyed" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="md.xsd">
+  <cues>
+
+    <cue name="IsOurStuffAttacked" instantiate="true">
+      <conditions>
+        <check_all>
+          <event_player_owned_attacked/>
+        </check_all>
+      </conditions>
+      <actions>
+        <assert value="$last_message"/>
+        <assert value="$past_time"/>
+        <do_if value="event.object" exact="$last_message">
+          <do_if value="(player.age - $past_time) ge 10">
+            <do_if value="event.object != player.controlled">
+              <show_help custom="'%1\n(%5)\nSector: %2\nis under attack!\n\nShield %3%%\nHull %4%%'.[event.object.name, event.object.sector.name, event.object.shieldpercentage, event.object.hullpercentage, event.object.idcode]" duration="6s" position="6" />
+              <set_value name="$last_message" exact="event.object"/>
+              <set_value name="$past_time" exact="player.age"/>
+            </do_if>
+          </do_if>
+        </do_if>
+        <do_else>
+          <do_if value="event.object != player.controlled">
+            <show_help custom="'%1\n(%5)\nSector: %2\nis under attack!\n\nShield %3%%\nHull %4%%'.[event.object.name, event.object.sector.name, event.object.shieldpercentage, event.object.hullpercentage, event.object.idcode]" duration="6s" position="6" />
+            <set_value name="$last_message" exact="event.object"/>
+            <set_value name="$past_time" exact="player.age"/>
+          </do_if>
+        </do_else>
+      </actions>
+    </cue>
+
+    <cue name="WasAnythingDestroyed" instantiate="true">
+      <conditions>
+        <check_all>
+          <event_player_owned_destroyed/>
+        </check_all>
+      </conditions>
+      <actions>
+        <do_if value="event.param3 != killmethod.collected and event.object != player.controlled and event.param3 != killmethod.removed">
+          <show_help custom="'%1\nSector: %2\nwas destroyed!'.[event.param.name, event.param.sector.name]" duration="6s" log="true" position="8" />
+        </do_if>
+      </actions>
+    </cue>
+
+  </cues>
+</mdscript>

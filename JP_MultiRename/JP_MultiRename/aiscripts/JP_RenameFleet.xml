@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<aiscript name="JP_RenameFleet" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="aiscripts.xsd">
+
+  <order id="JP_RenameFleet" name="RenameFleet" category="internal" infinite="false">
+    <params>
+      <param name="LEADER_SHIP" text="LeaderShip" type="internal" default="null"/>
+      <param name="USE_CLASS_NAME" type="internal" default="true"/>
+      <param name="USE_MODEL_NAME" type="internal" default="true"/>
+      <param name="USE_TYPE_NAME" type="internal" default="true"/>
+      <param name="USE_SHORT_MODEL_NAME" type="internal" default="true"/>
+      <param name="OWN_TAG_STRING" type="internal" default="''"/>
+      <param name="USE_OWN_FRONT_TAG" type="internal" default="false"/>
+      <param name="USE_OWN_BACK_TAG" type="internal" default="false"/>
+      <param name="OWN_NAME_STRING" type="internal" default="''"/>
+      <param name="USE_OWN_NAME" type="internal" default="false"/>
+      <param name="USED_VARIANT" type="internal" default="2"/>
+      <param name="USE_NUMBERS_TAG" type="internal" default="false"/>
+    </params>
+  </order>
+
+  <interrupts>
+    <handler ref="JobRemoveRequestHandler" />
+  </interrupts>
+
+  <init>
+  </init>
+
+  <attention min="unknown">
+    <actions>
+      <!-- Add sorted numbering -->
+      <!--<create_list name="$Subordinates"/>
+      <do_all exact="$LEADER_SHIP.subordinates.count" counter="$it">
+        <append_to_list name="$Subordinates" exact="$LEADER_SHIP.subordinates.{$it}"/>
+      </do_all>
+      <do_all exact="$Subordinates.count" counter="$jt">
+        <debug_text text="$Subordinates.{$jt}.name"/>
+      </do_all>-->
+      <do_all exact="$LEADER_SHIP.subordinates.count" counter="$_it">
+        <run_script name="'JP_RenameShip'">
+          <param name="SHIP" value="$LEADER_SHIP.subordinates.{$_it}"/>
+          <param name="USE_CLASS_NAME" value="$USE_CLASS_NAME"/>
+          <param name="USE_MODEL_NAME" value="$USE_MODEL_NAME"/>
+          <param name="USE_TYPE_NAME" value="$USE_TYPE_NAME"/>
+          <param name="USE_SHORT_MODEL_NAME" value="$USE_SHORT_MODEL_NAME"/>
+          <param name="OWN_TAG_STRING" value="$OWN_TAG_STRING"/>
+          <param name="USE_OWN_FRONT_TAG" value="$USE_OWN_FRONT_TAG"/>
+          <param name="USE_OWN_BACK_TAG" value="$USE_OWN_BACK_TAG"/>
+          <param name="OWN_NAME_STRING" value="$OWN_NAME_STRING"/>
+          <param name="USE_OWN_NAME" value="$USE_OWN_NAME"/>
+          <param name="USED_VARIANT" value="$USED_VARIANT"/>
+          <param name="USE_NUMBERS_TAG" value="$USE_NUMBERS_TAG"/>
+          <param name="NUMBER_TAG" value="$_it"/>
+        </run_script>
+      </do_all>
+    </actions>
+  </attention>
+
+  <on_abort>
+  </on_abort>
+
+</aiscript>

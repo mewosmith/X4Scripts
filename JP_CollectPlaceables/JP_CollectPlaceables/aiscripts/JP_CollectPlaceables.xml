@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<aiscript name="JP_CollectPlaceables" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="aiscripts.xsd" version="1">
+
+  <order id="JP_CollectPlaceables" name="JP CollectPlaceables" description="Collects placed items like sattelites." category="navigation" infinite="true">
+    <params>
+      <param name="OBJECT" type="object" text="Object" default="this.ship"/>
+      <param name="SECTOR" type="object" default="this.sector" text="{20001, 201}">
+        <input_param name="class" value="[class.sector]"/>
+      </param>
+      <param name="SATELLITE" type="bool" default="false" text="{20201,20301}"/>
+      <param name="RESOURCEPROBE" type="bool" default="false" text="{1001,8067}"/>
+      <param name="NAVBEACON" type="bool" default="false" text="{20201,20801}"/>
+      <param name="LASERTOWER" type="bool" default="false" text="{20221,1041}"/>
+      <param name="INSTANT" type="bool" default="false" text="Instant?"/>
+      <param name="DEBUG" text="Debug" type="bool" default="false" advanced="true"/>
+    </params>
+    <skill min="0"/>
+    <requires>
+      <match shiptype="shiptype.lasertower" negate="true"/>
+    </requires>
+  </order>
+
+  <interrupts>
+    <handler ref="SectorChangeHandler"/>
+    <handler ref="TargetInvalidHandler"/>
+    <handler ref="AttackHandler"/>
+    <handler ref="MissileLockHandler" />
+    <handler ref="ScannedHandler"/>
+    <handler ref="InspectedHandler"/>
+    <handler ref="FoundAbandonedHandler"/>
+    <handler ref="FoundLockboxHandler"/>
+    <handler ref="ResupplyHandler"/>
+    <handler ref="JobRemoveRequestHandler" />
+  </interrupts>
+
+  <init>
+  </init>
+
+  <attention min="unknown">
+    <actions>
+
+      <wait exact="1ms"/>
+      <label name="START"/>
+      <set_value name="$SHIP" exact="this.ship"/>
+
+      <do_if value="$OBJECT == $SHIP">
+        <create_list name="$Placeables"/>
+        <create_list name="$TempPlaceables"/>
+
+        <do_if value="$SATELLITE">
+          <find_object space="$SECTOR" canbepickedup="true" owner="$SHIP.owner" multiple="true" name="$TempSatellites">
+            <match class="class.satellite"/>
+          </find_object>
+          <do_all exact="$TempSatellites.count" counter="$_it">
+            <append_to_list name="$TempPlaceables" exact="$TempSatellites.{$_it}"/>
+          </do_all>
+        </do_if>
+
+        <do_if value="$RESOURCEPROBE">
+          <find_object space="$SECTOR" canbepickedup="true" owner="$SHIP.owner" multiple="true" name="$TempResourceprobe">
+            <match class="class.resourceprobe"/>
+          </find_object>
+          <do_all exact="$TempResourceprobe.count" counter="$_it">
+            <append_to_list name="$TempPlaceables" exact="$TempResourceprobe.{$_it}"/>
+          </do_all>
+        </do_if>
+
+        <do_if value="$NAVBEACON">
+          <find_object space="$SECTOR" canbepickedup="true" owner="$SHIP.owner" multiple="true" name="$TempNavbeacon">
+            <match class="class.navbeacon"/>
+          </find_object>
+          <do_all exact="$TempNavbeacon.count" counter="$_it">
+            <append_to_list name="$TempPlaceables" exact="$TempNavbeacon.{$_it}"/>
+          </do_all> </do_if>
+
+        <do_if value="$LASERTOWER">
+          <find_object space="$SECTOR" canbepickedup="true" owner="$SHIP.owner" multiple="true" name="$TempLasertower">
+            <match shiptype="shiptype.lasertower"/>
+          </find_object>
+          <do_all exact="$TempLasertower.count" counter="$_it">
+            <append_to_list name="$TempPlaceables" exact="$TempLasertower.{$_it}"/>
+          </do_all>
+        </do_if>
+
+        <!-- Sort all objects by distance to the ship -->
+        <do_while value="$TempPlaceables.count gt 0">
+          <set_value name="$index" exact="0"/>
+          <set_value name="$biggestDistance" exact="0"/>
+          <do_all exact="$TempPlaceables.count" counter="$_it">
+            <do_if value="$SHIP.distanceto.{$TempPlaceables.{$_it}} gt $biggestDistance">
+              <set_value name="$biggestDistance" exact="$SHIP.distanceto.{$TempPlaceables.{$_it}}"/>
+              <set_value name="$index" exact="$_it"/>
+            </do_if>
+          </do_all>
+          <append_to_list name="$Placeables" exact="$TempPlaceables.{$index}"/>
+          <remove_from_list name="$TempPlaceables" list="$Placeables"/>
+        </do_while>
+        <remove_value name="$TempPlaceables"/>
+
+        <do_if value="$DEBUG">
+          <do_all exact="$Placeables.count" counter="$_it" reverse="true">
+            <debug_text text="'%1  ~~  %2 [%3]'.[$SHIP.distanceto.{$Placeables.{$_it}}, $Placeables.{$_it}.knownname, $Placeables.{$_it}.idcode]"/>
+          </do_all>
+        </do_if>
+
+        <!-- Collect that stuff -->
+        <do_all exact="$Placeables.count" counter="$_it" reverse="true">
+          <do_if value="$DEBUG">
+            <debug_text text="'%1 %2 [%3]'.[{1004,32}, $Placeables.{$_it}.knownname, $Placeables.{$_it}.idcode]"/>
+          </do_if>
+          <do_if value="$INSTANT">
+            <collect_deployable deployable="$Placeables.{$_it}" object="$SHIP"/>
+          </do_if>
+          <do_else>
+            <run_script name="'move.generic'">
+              <param name="destination" value="$Placeables.{$_it}"/>
+            </run_script>
+            <collect_deployable deployable="$Placeables.{$_it}" object="$SHIP"/>
+          </do_else>
+        </do_all>
+
+        <remove_value name="$Placeables"/>
+      </do_if>
+      <do_else>
+        <do_if value="$OBJECT.owner.id == $SHIP.owner.id">
+          <check_object result="$RESULT" object="$OBJECT">
+            <match_any>
+              <match class="class.satellite"/>
+              <match class="class.resourceprobe"/>
+              <match class="class.navbeacon"/>
+              <match shiptype="shiptype.lasertower"/>
+            </match_any>
+          </check_object>
+          <do_if value="$RESULT">
+            <!-- Collect the object -->
+            <do_if value="$DEBUG">
+              <debug_text text="'%1 %2 [%3]'.[{1004,32}, $OBJECT.knownname, $OBJECT.idcode]"/>
+            </do_if>
+            <do_if value="$INSTANT">
+              <collect_deployable deployable="$OBJECT" object="$SHIP"/>
+            </do_if>
+            <do_else>
+              <run_script name="'move.generic'">
+                <param name="destination" value="$OBJECT"/>
+              </run_script>
+              <collect_deployable deployable="$OBJECT" object="$SHIP"/>
+            </do_else>
+          </do_if>
+        </do_if>
+      </do_else>
+
+      <remove_value name="$SHIP"/>
+
+      <label name="FINISH"/>
+      <set_order_syncpoint_reached order="this.ship.order"/>
+      <cancel_order order="this.ship.order" />
+      <wait exact="1ms"/>
+
+    </actions>
+  </attention>
+
+</aiscript>

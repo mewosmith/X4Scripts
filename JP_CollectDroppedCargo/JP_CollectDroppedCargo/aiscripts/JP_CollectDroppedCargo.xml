@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<aiscript name="JP_CollectDroppedCargo" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="aiscripts.xsd" version="1">
+
+  <order id="JP_CollectDroppedCargo" name="JP CollectDroppedCargo" description="Collects dropped cargo." category="navigation" infinite="true">
+    <params>
+      <param name="SECTOR" type="object" default="this.sector" text="{20001, 201}" required="true">
+        <input_param name="class" value="[class.sector]"/>
+      </param>
+      <param name="INSTANT" type="bool" default="false" text="Instant?"/>
+      <param name="DEBUG" text="Debug" type="bool" default="false" advanced="true"/>
+    </params>
+    <skill min="0"/>
+    <requires>
+      <match shiptype="shiptype.lasertower" negate="true"/>
+    </requires>
+  </order>
+
+  <interrupts>
+    <handler ref="SectorChangeHandler"/>
+    <handler ref="TargetInvalidHandler"/>
+    <handler ref="AttackHandler"/>
+    <handler ref="MissileLockHandler" />
+    <handler ref="ScannedHandler"/>
+    <handler ref="InspectedHandler"/>
+    <handler ref="FoundAbandonedHandler"/>
+    <handler ref="FoundLockboxHandler"/>
+    <handler ref="ResupplyHandler"/>
+    <handler ref="JobRemoveRequestHandler" />
+  </interrupts>
+
+  <init>
+  </init>
+
+  <attention min="unknown">
+    <actions>
+
+      <wait exact="1ms"/>
+      <label name="START"/>
+      <set_value name="$RUNNING" exact="true"/>
+      <set_value name="$SHIP" exact="this.ship"/>
+
+      <label name="$RESUME"/>
+
+      <create_list name="$DroppedCargo"/>
+      <create_list name="$TempDroppedCargo"/>
+      <find_object name="$TempDroppedCargo" space="$SECTOR" multiple="true" canbepickedup="true">
+        <match_any>
+          <match class="class.collectablewares"/>
+          <match class="class.collectableammo"/>
+        </match_any>
+      </find_object>
+
+      <!-- Sort all objects by distance to the ship -->
+      <do_while value="$TempDroppedCargo.count gt 0">
+        <set_value name="$index" exact="0"/>
+        <set_value name="$biggestDistance" exact="0"/>
+        <do_all exact="$TempDroppedCargo.count" counter="$_it">
+          <do_if value="$SHIP.distanceto.{$TempDroppedCargo.{$_it}} gt $biggestDistance">
+            <set_value name="$biggestDistance" exact="$SHIP.distanceto.{$TempDroppedCargo.{$_it}}"/>
+            <set_value name="$index" exact="$_it"/>
+          </do_if>
+        </do_all>
+        <append_to_list name="$DroppedCargo" exact="$TempDroppedCargo.{$index}"/>
+        <remove_from_list name="$TempDroppedCargo" list="$DroppedCargo"/>
+      </do_while>
+      <remove_value name="$TempDroppedCargo"/>
+
+      <do_if value="$DEBUG">
+        <do_all exact="$DroppedCargo.count" counter="$_it" reverse="true">
+          <debug_text text="'%1  ~~  %2 [%3]'.[$SHIP.distanceto.{$DroppedCargo.{$_it}}, $DroppedCargo.{$_it}.class, $DroppedCargo.{$_it}.idcode]"/>
+        </do_all>
+      </do_if>
+
+      <do_if value="$INSTANT">
+      </do_if>
+      <do_else>
+        <do_all exact="$DroppedCargo.count" counter="$_it" reverse="true">
+          <set_value name="$Wares" exact="$DroppedCargo.{$_it}.wares.list"/>
+          <debug_text text="'Wares Count: %1'.[$Wares.count]"/>
+          <do_all exact="$Wares.count" counter="$_jt">
+            <debug_text text="'%1 ~~ %2  ~~  %3 ~~ %4  ~~  %5'.[$Wares.{$_jt}.isammo, $Wares.{$_jt}.isinventory, $SHIP.ammostorage.{$Wares.{$_jt}}.free, $SHIP.cargo.{$Wares.{$_jt}}.free, $Wares]"/>
+            <do_if value="$Wares.{$_jt}.isammo and $SHIP.ammostorage.{$Wares.{$_jt}}.free">
+              <debug_text text="'isammo ' + $Wares.{$_jt}"/>
+              <debug_text text="$DroppedCargo.{$_it}.class"/>
+            </do_if>
+            <do_elseif value="$Wares.{$_jt}.isinventory and $SHIP.cargo.{$Wares.{$_jt}}.free">
+              <debug_text text="'isinventory ' + $Wares.{$_jt}"/>
+              <debug_text text="$DroppedCargo.{$_it}.class"/>
+            </do_elseif>
+            <do_else>
+              <!--<run_script name="'move.generic'">
+                <param name="destination" value="$DroppedCargo.{$_it}"/>
+              </run_script>
+              <collect_drop drop="$DroppedCargo.{$_it}" object="$SHIP"/>-->
+            </do_else>
+          </do_all>
+          <remove_value name="$Wares"/>
+        </do_all>
+      </do_else>
+
+      <remove_value name="$DroppedCargo"/>
+      <set_value name="$RUNNING" exact="false"/>
+
+      <do_if value="$RUNNING">
+        <wait exact="20s"/>
+        <resume label="$RESUME"/>
+      </do_if>
+
+      <label name="$CLEANUP"/>
+      <remove_value name="$SHIP"/>
+
+      <label name="FINISH"/>
+      <set_order_syncpoint_reached order="this.ship.order"/>
+      <cancel_order order="this.ship.order" />
+      <wait exact="1ms"/>
+
+    </actions>
+  </attention>
+
+</aiscript>

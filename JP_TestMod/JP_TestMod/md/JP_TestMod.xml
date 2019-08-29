@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<mdscript name="JP_TestMod_MD" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="md.xsd">
+  <cues>
+
+    <cue name="JP_TestMod_MD" instantiate="true" checkinterval="1200s">
+      <conditions>
+      </conditions>
+      <actions>
+        <trigger_autosave/>
+      </actions>
+    </cue>
+
+    <cue name ="JP_TestMod2_MD" instantiate="true">
+      <conditions>
+        <event_player_teleport_successful/>
+      </conditions>
+      <actions>
+        <!--<reward_player money="9000000000"/>-->
+        <!--<debug_text text="faction.player.relationto.{faction.argon}"/>
+        <set_faction_relation faction="faction.argon" otherfaction="faction.player" value="1"/>
+        <debug_text text="faction.player.relationto.{faction.argon}"/>-->
+        <!--<add_faction_relation faction="faction.player" otherfaction="faction.antigone" value="-500" reason="relationchangereason.missionfailed"/>-->
+      </actions>
+    </cue>
+
+  </cues>
+</mdscript>

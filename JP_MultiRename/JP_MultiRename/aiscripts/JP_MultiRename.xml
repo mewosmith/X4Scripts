@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<aiscript name="JP_MultiRename" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="aiscripts.xsd">
+
+  <order id="JP_MultiRename" name="JP MultiRename" description="Fleets Renaming" category="navigation" infinite="true">
+    <params>
+      <param name="NAME_VARINAT" default="2" type="number" text="Naming Variant" required="false">
+        <input_param name="startvalue" value="2"/>
+        <input_param name="min" value="1"/>
+        <input_param name="max" value="6"/>
+        <input_param name="step" value="1"/>
+      </param>
+      <param name="USE_CLASS_NAME" type="bool" text="Class?" default="true"/>
+      <param name="USE_MODEL_NAME" type="bool" text="Model Name?" default="true"/>
+      <param name="USE_TYPE_NAME" type="bool" text="Typ?" default="true"/>
+      <param name="USE_SHORT_MODEL_NAME" type="bool" text="Short Model Name?" default="true"/>
+      <param name="USE_SUBFLEETS" type="bool" text="Rename sub fleets?" default="false"/>
+      <param name="USE_OWN_FRONT_TAG" type="bool" text="Use own tag at Front?" default="false" />
+      <param name="USE_OWN_BACK_TAG" type="bool" text="Use own tag at Back?" default="false"/>
+      <param name="USE_OWN_NAME" type="bool" text="Use own name?" default="false"/>
+      <param name="USE_NUMBERS" type="bool" text="Use Numbers?" default="false"/>
+    </params>
+    <skill min="0"/>
+    <requires>
+      <match shiptype="shiptype.lasertower" negate="true"/>
+    </requires>
+  </order>
+
+  <interrupts>
+    <handler ref="SectorChangeHandler"/>
+    <handler ref="TargetInvalidHandler"/>
+    <handler ref="AttackHandler"/>
+    <handler ref="MissileLockHandler" />
+    <handler ref="ScannedHandler"/>
+    <handler ref="InspectedHandler"/>
+    <handler ref="FoundAbandonedHandler"/>
+    <handler ref="FoundLockboxHandler"/>
+    <handler ref="ResupplyHandler"/>
+    <handler ref="JobRemoveRequestHandler" />
+  </interrupts>
+
+  <init>
+    <set_value name="$Ship" exact="this.ship"/>
+    <set_value name="$Subordinates" exact="(if ($USE_SUBFLEETS) then $Ship.allsubordinates else 0)"/>
+    <set_value name="$OwnTagString" exact="(if ($USE_OWN_FRONT_TAG or $USE_OWN_BACK_TAG) then $Ship.name else '')"/>
+    <set_value name="$OwnNameString" exact="(if ($USE_OWN_NAME) then $Ship.name else '')"/>
+  </init>
+
+  <attention min="unknown">
+    <actions>
+
+      <!-- Rename sub Fleets -->
+      <do_if value="$USE_SUBFLEETS">
+        <do_all exact="$Subordinates.count" counter="$_it">
+          <do_if value="$Subordinates.{$_it}.type" list="[shiptype.smalldrone, shiptype.xsdrone]" negate="true">
+            <do_if value="$Subordinates.{$_it}.subordinates.count gt 0">
+              <run_script name="'JP_RenameFleet'">
+                <param name="LEADER_SHIP" value="$Subordinates.{$_it}"/>
+                <param name="USE_CLASS_NAME" value="$USE_CLASS_NAME"/>
+                <param name="USE_MODEL_NAME" value="$USE_MODEL_NAME"/>
+                <param name="USE_TYPE_NAME" value="$USE_TYPE_NAME"/>
+                <param name="USE_SHORT_MODEL_NAME" value="$USE_SHORT_MODEL_NAME"/>
+                <param name="OWN_TAG_STRING" value="$OwnTagString"/>
+                <param name="USE_OWN_FRONT_TAG" value="$USE_OWN_FRONT_TAG"/>
+                <param name="USE_OWN_BACK_TAG" value="$USE_OWN_BACK_TAG"/>
+                <param name="OWN_NAME_STRING" value="$OwnNameString"/>
+                <param name="USE_OWN_NAME" value="$USE_OWN_NAME"/>
+                <param name="USED_VARIANT" value="$NAME_VARINAT"/>
+                <param name="USE_NUMBERS_TAG" value="$USE_NUMBERS"/>
+              </run_script>
+            </do_if>
+          </do_if>
+        </do_all>
+      </do_if>
+
+      <!-- Rename Fleet -->
+      <run_script name="'JP_RenameFleet'">
+        <param name="LEADER_SHIP" value="$Ship"/>
+        <param name="USE_CLASS_NAME" value="$USE_CLASS_NAME"/>
+        <param name="USE_MODEL_NAME" value="$USE_MODEL_NAME"/>
+        <param name="USE_TYPE_NAME" value="$USE_TYPE_NAME"/>
+        <param name="USE_SHORT_MODEL_NAME" value="$USE_SHORT_MODEL_NAME"/>
+        <param name="OWN_TAG_STRING" value="$OwnTagString"/>
+        <param name="USE_OWN_FRONT_TAG" value="$USE_OWN_FRONT_TAG"/>
+        <param name="USE_OWN_BACK_TAG" value="$USE_OWN_BACK_TAG"/>
+        <param name="OWN_NAME_STRING" value="$OwnNameString"/>
+        <param name="USE_OWN_NAME" value="$USE_OWN_NAME"/>
+        <param name="USED_VARIANT" value="$NAME_VARINAT"/>
+        <param name="USE_NUMBERS_TAG" value="$USE_NUMBERS"/>
+      </run_script>
+
+      <!-- Rename initial Leader Ship -->
+      <run_script name="'JP_RenameShip'">
+        <param name="SHIP" value="$Ship"/>
+        <param name="USE_CLASS_NAME" value="$USE_CLASS_NAME"/>
+        <param name="USE_MODEL_NAME" value="$USE_MODEL_NAME"/>
+        <param name="USE_TYPE_NAME" value="$USE_TYPE_NAME"/>
+        <param name="USE_SHORT_MODEL_NAME" value="$USE_SHORT_MODEL_NAME"/>
+        <param name="OWN_TAG_STRING" value="$OwnTagString"/>
+        <param name="USE_OWN_FRONT_TAG" value="$USE_OWN_FRONT_TAG"/>
+        <param name="USE_OWN_BACK_TAG" value="$USE_OWN_BACK_TAG"/>
+        <param name="OWN_NAME_STRING" value="$OwnNameString"/>
+        <param name="USE_OWN_NAME" value="$USE_OWN_NAME"/>
+        <param name="USED_VARIANT" value="$NAME_VARINAT"/>
+      </run_script>
+
+      <remove_value name="$OwnNameString"/>
+      <remove_value name="$OwnTagString"/>
+      <remove_value name="$Subordinates"/>
+      <remove_value name="$Ship"/>
+      
+      <set_order_syncpoint_reached order="this.ship.order"/>
+      <cancel_order order="this.ship.order" />
+      <wait exact="1ms"/>
+      
+    </actions>
+  </attention>
+
+  <on_abort>
+  </on_abort>
+
+</aiscript>

@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<aiscript name="JP_TradeOrderExplorer" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="aiscripts.xsd">
+
+  <order id="JP_TradeOrderExplorer" name="JP TradeOrderExplorer" description="Updates galaxy wide trade orders." category="navigation" infinite="true">
+    <params>
+      <param name="SECTOR_TO_EXPLORE" type="object" default="this.sector" text="Sector to explore">
+        <input_param name="class" value="[class.sector]"/>
+      </param>
+      <param name="ENTIRE_GALAXY" type="bool" default="false" text="Entire galaxy?"/>
+      <param name="RECURRENT" type="bool" default="false" text="Check recurrent?"/>
+      <param name="DEBUG" type="bool" default="false" text="DEBUG" advanced="true"/>
+    </params>
+    <skill min="0"/>
+    <requires>
+      <match shiptype="shiptype.lasertower" negate="true"/>
+    </requires>
+  </order>
+
+  <interrupts>
+    <handler ref="SectorChangeHandler"/>
+    <handler ref="TargetInvalidHandler"/>
+    <handler ref="AttackHandler"/>
+    <handler ref="MissileLockHandler" />
+    <handler ref="ScannedHandler"/>
+    <handler ref="InspectedHandler"/>
+    <handler ref="FoundAbandonedHandler"/>
+    <handler ref="FoundLockboxHandler"/>
+    <handler ref="ResupplyHandler"/>
+    <handler ref="JobRemoveRequestHandler" />
+  </interrupts>
+
+  <init>
+  </init>
+
+  <attention min="unknown">
+    <actions>
+
+      <label name="START"/>
+      <wait exact="1ms"/>
+
+      <label name="RESUME"/>
+      <do_if value="$ENTIRE_GALAXY" >
+
+        <create_list name="$Sectors"/>
+        <create_list name="$EnemySectors"/>
+
+        <find_sector name="$Sectors" space="player.galaxy" multiple="true"/>
+        <find_sector name="$EnemySectors" space="player.galaxy" multiple="true" mayattack="this.ship.owner"/>
+
+        <remove_from_list name="$Sectors" list="$EnemySectors"/>
+        <remove_value name="$EnemySectors"/>
+
+        <shuffle_list list="$Sectors"/>
+
+        <do_if value="$DEBUG">
+          <debug_text text="'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'"/>
+        </do_if>
+
+        <do_all exact="$Sectors.count" counter="$_it">
+          <do_if value="$DEBUG">
+            <debug_text text="'Refresh trade orders in sector %1'.[$Sectors.{$_it}.knownname]"/>
+          </do_if>
+
+          <create_list name="$Stations"/>
+          <create_list name="$EnemyStations"/>
+          <create_list name="$StationsKnownTrades"/>
+
+          <find_station name="$Stations" space="$Sectors.{$_it}" knownto="this.ship.owner" multiple="true"/>
+          <find_station name="$EnemyStations" space="$Sectors.{$_it}" mayattack="this.ship.owner" multiple="true"/>
+          <find_station name="$StationsKnownTrades" space="$Sectors.{$_it}" tradesknownto="this.ship.owner" multiple="true"/>
+
+          <remove_from_list name="$Stations" list="$EnemyStations"/>
+          <remove_from_list name="$Stations" list="$StationsKnownTrades"/>
+          <shuffle_list list="$Stations"/>
+
+          <remove_value name="$EnemyStations"/>
+          <remove_value name="$StationsKnownTrades"/>
+
+          <do_if value="$DEBUG">
+            <debug_text text="'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'"/>
+            <debug_text text="'Stations to explore: %1'.[$Stations.count]"/>
+            <do_all exact="$Stations.count" counter="$_jt">
+              <debug_text text="'%1 [%2] ~~  %3'.[$Stations.{$_jt}.knownname, $Stations.{$_jt}.idcode, $Stations.{$_jt}.owner.knownname]"/>
+            </do_all>
+            <debug_text text="'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'"/>
+          </do_if>
+
+          <do_if value="$Stations.count gt 0">
+            <do_all exact="$Stations.count" counter="$_kt">
+              <do_if value="$Stations.{$_kt}.hastradesubscription" negate="true">
+                <do_if value="$DEBUG">
+                  <debug_text text="'Fly to the station %1 [%2] in sector %3'.[$Stations.{$_kt}.knownname, $Stations.{$_kt}.idcode, $Sectors.{$_it}.knownname]"/>
+                </do_if>
+                <run_script name="'move.generic'">
+                  <param name="destination" value="$Stations.{$_kt}"/>
+                  <param name="endintargetzone" value="true"/>
+                </run_script>
+              </do_if>
+              <do_else>
+                <do_if value="$DEBUG">
+                  <debug_text text="'Station %1 [%2] was skipped because trade offers already updated'.[$Stations.{$_kt}.knownname, $Stations.{$_kt}.idcode]"/>
+                </do_if>
+              </do_else>
+            </do_all>
+          </do_if>
+          <do_else>
+            <debug_text text="'All stations are up to date'"/>
+          </do_else>
+
+          <do_if value="$DEBUG">
+            <debug_text text="'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'"/>
+          </do_if>
+
+          <remove_value name="$Stations"/>
+        </do_all>
+
+        <remove_value name="$Sectors"/>
+      </do_if>
+      <do_else>
+        <do_if value="$DEBUG">
+          <debug_text text="'Refresh trade orders in sector %1'.[$SECTOR_TO_EXPLORE.knownname]"/>
+        </do_if>
+
+        <create_list name="$Stations"/>
+        <create_list name="$EnemyStations"/>
+        <create_list name="$StationsKnownTrades"/>
+
+        <find_station name="$Stations" space="$SECTOR_TO_EXPLORE" knownto="this.ship.owner" multiple="true"/>
+        <find_station name="$EnemyStations" space="$SECTOR_TO_EXPLORE" mayattack="this.ship.owner" multiple="true"/>
+        <find_station name="$StationsKnownTrades" space="$SECTOR_TO_EXPLORE" tradesknownto="this.ship.owner" multiple="true"/>
+
+        <remove_from_list name="$Stations" list="$EnemyStations"/>
+        <remove_from_list name="$Stations" list="$StationsKnownTrades"/>
+        <shuffle_list list="$Stations"/>
+
+        <remove_value name="$EnemyStations"/>
+        <remove_value name="$StationsKnownTrades"/>
+
+        <do_if value="$DEBUG">
+          <debug_text text="'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'"/>
+          <debug_text text="'Stations to explore: %1'.[$Stations.count]"/>
+          <do_all exact="$Stations.count" counter="$_it">
+            <debug_text text="'%1 [%2] ~~  %3'.[$Stations.{$_it}.knownname, $Stations.{$_it}.idcode, $Stations.{$_it}.owner.knownname]"/>
+          </do_all>
+          <debug_text text="'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'"/>
+        </do_if>
+
+        <do_if value="$Stations.count gt 0">
+          <do_all exact="$Stations.count" counter="$_it">
+            <do_if value="$Stations.{$_it}.hastradesubscription" negate="true">
+              <do_if value="$DEBUG">
+                <debug_text text="'Fly to the station %1 [%2] in sector %3'.[$Stations.{$_it}.knownname, $Stations.{$_it}.idcode, $SECTOR_TO_EXPLORE.knownname]"/>
+              </do_if>
+              <run_script name="'move.generic'">
+                <param name="destination" value="$Stations.{$_it}"/>
+                <param name="endintargetzone" value="true"/>
+              </run_script>
+            </do_if>
+            <do_else>
+              <do_if value="$DEBUG">
+                <debug_text text="'Station %1 [%2] was skipped because trade offers already updated'.[$Stations.{$_kt}.knownname, $Stations.{$_kt}.idcode]"/>
+              </do_if>
+            </do_else>
+          </do_all>
+        </do_if>
+        <do_else>
+          <debug_text text="'All stations are up to date'"/>
+        </do_else>
+
+        <do_if value="$DEBUG">
+          <debug_text text="'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'"/>
+        </do_if>
+
+        <remove_value name="$Stations"/>
+      </do_else>
+
+      <do_if value="$RECURRENT">
+        <wait exact="15s"/>
+        <resume label="RESUME"/>
+      </do_if>
+
+      <label name="FINISH"/>
+
+      <set_order_syncpoint_reached order="this.ship.order"/>
+      <cancel_order order="this.ship.order" />
+      <wait exact="1ms"/>
+
+    </actions>
+  </attention>
+
+  <on_abort>
+  </on_abort>
+
+</aiscript>

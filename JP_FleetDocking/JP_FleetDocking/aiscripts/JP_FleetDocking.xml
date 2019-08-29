@@ -1,0 +1,96 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<aiscript name="JP_FleetDocking" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="aiscripts.xsd" version="1">
+  <order id="JP_FleetDocking" name="JP FleetDocking" description="Adds the ability to dock all drones, fighters and M ships in a Fleet at once" category="navigation" infinite="true">
+    <params>
+      <param name="DockS" type="bool" default="true" text="Dock S Ships" comment="docking S ships"/>
+      <param name="DockM" type="bool" default="true" text="Dock M Ships" comment="docking M ships"/>
+      <param name="DockDrones" type="bool" default="false" text="Dock Drones" comment="docking drones"/>
+    </params>
+    <skill min="0" />
+    <requires>
+      <match shiptype="shiptype.lasertower" negate="true"/>
+    </requires>
+  </order>
+
+  <interrupts>
+    <handler ref="SectorChangeHandler"/>
+    <handler ref="TargetInvalidHandler"/>
+    <handler ref="AttackHandler"/>
+    <handler ref="MissileLockHandler" />
+    <handler ref="ScannedHandler"/>
+    <handler ref="InspectedHandler"/>
+    <handler ref="FoundAbandonedHandler"/>
+    <handler ref="FoundLockboxHandler"/>
+    <handler ref="ResupplyHandler"/>
+    <handler ref="JobRemoveRequestHandler" />
+  </interrupts>
+
+  <init>
+  </init>
+
+  <attention min="unknown">
+    <actions>
+      <set_value name="$leader" exact="this.ship" />
+      <set_value name="$subs" exact="this.ship.allsubordinates" />
+      <do_if value="$DockDrones" exact="true">
+        <!-- Recall drones -->
+        <run_script name="'lib.recall.subordinates'" >
+          <param name="timeout" value="-1s" comment="recall drones" />
+        </run_script>
+      </do_if>
+      <do_all exact="$subs.count" counter="$it">
+        <do_if value="($subs.{$it}.class == class.ship_s) and ($DockS == false)">
+          <continue/>
+        </do_if>
+        <do_if value="($subs.{$it}.class == class.ship_m) and ($DockM == false)">
+          <continue/>
+        </do_if>
+        <do_if value="($subs.{$it}.isunit) and ($DockDrones == false)">
+          <continue/>
+        </do_if>
+        <do_if value="$subs.{$it}.class" list="[class.ship_xs, class.ship_s, class.ship_m]">
+          <do_if value="$subs.{$it}.commander.dockingallowed.{$subs.{$it}}">
+            <cancel_all_orders object="$subs.{$it}" />
+            <create_order object="$subs.{$it}" id="'DockAndWait'">
+              <param name="destination" value="$subs.{$it}.commander" />
+            </create_order>
+          </do_if>
+          <do_else>
+            <do_if value="$leader.dockingallowed.{$subs.{$it}}">
+              <cancel_all_orders object="$subs.{$it}" />
+              <create_order object="$subs.{$it}" id="'DockAndWait'">
+                <param name="destination" value="$leader" />
+              </create_order>
+            </do_if>
+            <do_else>
+              <do_all exact="$subs.count" counter="$jt">
+                <do_if value="$subs.{$jt}.dockingallowed.{$subs.{$it}}">
+                  <cancel_all_orders object="$subs.{$it}" />
+                  <create_order object="$subs.{$it}" id="'DockAndWait'">
+                    <param name="destination" value="$subs.{$jt}" />
+                  </create_order>
+                </do_if>
+              </do_all>
+            </do_else>
+          </do_else>
+        </do_if>
+        <do_if value="$subs.{$it}.class" list="[class.ship_l, class.ship_xl]">
+          <cancel_all_orders object="$subs.{$it}" />
+          <create_order object="$subs.{$it}" id="'Follow'">
+            <param name="target" value="$leader" />
+          </create_order>
+        </do_if>
+      </do_all>
+      
+      <wait exact="1ms"/>
+      <set_order_syncpoint_reached order="this.ship.order"/>
+      <cancel_order order="this.ship.order" />
+      
+    </actions>
+  </attention>
+
+  <on_abort>
+  </on_abort>
+
+</aiscript>

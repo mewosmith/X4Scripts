@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<aiscript name="JP_RenameShip" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="aiscripts.xsd">
+
+  <order id="JP_RenameShip" name="renames an ship" category="internal" infinite="false">
+    <params>
+      <param name="SHIP" type="object" text="ShipObject"/>
+      <param name="USE_CLASS_NAME" type="internal" default="true"/>
+      <param name="USE_MODEL_NAME" type="internal" default="true"/>
+      <param name="USE_TYPE_NAME" type="internal" default="true"/>
+      <param name="USE_SHORT_MODEL_NAME" type="internal" default="true"/>
+      <param name="OWN_TAG_STRING" type="internal" default="''"/>
+      <param name="USE_OWN_FRONT_TAG" type="internal" default="false"/>
+      <param name="USE_OWN_BACK_TAG" type="internal" default="false"/>
+      <param name="OWN_NAME_STRING" type="internal" default="''"/>
+      <param name="USE_OWN_NAME" type="internal" default="false"/>
+      <param name="USED_VARIANT" type="internal" default="2"/>
+      <param name="USE_NUMBERS_TAG" type="internal" default="false"/>
+      <param name="NUMBER_TAG" type="internal" default="0"/>
+    </params>
+  </order>
+
+  <interrupts>
+    <handler ref="JobRemoveRequestHandler" />
+  </interrupts>
+
+  <init>
+    <set_value name="$OwnTagString" exact="$OWN_TAG_STRING"/>
+    <set_value name="$OwnNameString" exact="$OWN_NAME_STRING"/>
+    <do_if value="$USE_NUMBERS_TAG">
+      <do_if value="$NUMBER_TAG lt 10">
+        <set_value name="$NUMBER_TAG" exact="'00' + $NUMBER_TAG"/>
+      </do_if>
+      <do_elseif value="($NUMBER_TAG ge 10) and ($NUMBER_TAG lt 100)">
+        <set_value name="$NUMBER_TAG" exact="'0' + $NUMBER_TAG"/>
+      </do_elseif>
+    </do_if>
+  </init>
+
+  <attention min="unknown">
+    <actions>
+
+      <do_if value="$USE_OWN_NAME">
+        <set_value name="$ShipName" exact="$OwnNameString"/>
+      </do_if>
+      <do_else>
+
+        <do_if value="$USE_CLASS_NAME">
+          <run_script name="'JP_GetShipClassName'">
+            <param name="SHIP" value="$SHIP"/>
+            <save_retval name="SHIP_CLASS" variable="$ShipClassName"/>
+          </run_script>
+        </do_if>
+
+        <do_if value="$USE_MODEL_NAME">
+          <do_if value="$USE_SHORT_MODEL_NAME">
+            <run_script name="'JP_GetShortShipModelName'">
+              <param name="SHIP" value="$SHIP"/>
+              <save_retval name="SHORT_SHIP_MODEL_NAME" variable="$ShipModelName" />
+            </run_script>
+          </do_if>
+          <do_else>
+            <set_value name="$ShipModelName" exact="$SHIP.macro.rawname"/>
+          </do_else>
+        </do_if>
+
+        <do_if value="$USE_TYPE_NAME">
+          <set_value name="$ShipTypeName" exact="$SHIP.typename"/>
+        </do_if>
+
+        <set_value name="$CLASS_NAME" exact="(if ($USE_CLASS_NAME) then ($ShipClassName + ' ') else '')"/>
+        <set_value name="$MODEL_NAME" exact="(if ($USE_MODEL_NAME) then ($ShipModelName + ' ') else '')"/>
+        <set_value name="$TYPE_NAME"  exact="(if ($USE_TYPE_NAME) then ($ShipTypeName + ' ') else '')"/>
+        <set_value name="$FRONT_TAG"  exact="(if ($USE_OWN_FRONT_TAG) then ($OwnTagString + ' ') else '')"/>
+        <set_value name="$BACK_TAG"   exact="(if ($USE_OWN_BACK_TAG) then ($OwnTagString + ' ') else '')"/>
+        <set_value name="$NUMBER_TAG" exact="(if ($USE_NUMBERS_TAG) then ($NUMBER_TAG + ' ') else '')"/>
+
+        <do_if value="$USED_VARIANT" exact="1">
+          <set_value name="$ShipName" exact="( $FRONT_TAG + $NUMBER_TAG + $CLASS_NAME + $MODEL_NAME + $TYPE_NAME + $BACK_TAG )"/>
+        </do_if>
+        <do_elseif value="$USED_VARIANT" exact="2">
+          <set_value name="$ShipName" exact="( $FRONT_TAG + $NUMBER_TAG + $CLASS_NAME + $TYPE_NAME + $MODEL_NAME + $BACK_TAG )"/>
+        </do_elseif>
+        <do_elseif value="$USED_VARIANT" exact="3">
+          <set_value name="$ShipName" exact="( $FRONT_TAG + $NUMBER_TAG + $MODEL_NAME + $CLASS_NAME + $TYPE_NAME + $BACK_TAG )"/>
+        </do_elseif>
+        <do_elseif value="$USED_VARIANT" exact="4">
+          <set_value name="$ShipName" exact="( $FRONT_TAG + $NUMBER_TAG + $MODEL_NAME + $TYPE_NAME + $CLASS_NAME + $BACK_TAG )"/>
+        </do_elseif>
+        <do_elseif value="$USED_VARIANT" exact="5">
+          <set_value name="$ShipName" exact="( $FRONT_TAG + $NUMBER_TAG + $TYPE_NAME + $CLASS_NAME + $MODEL_NAME + $BACK_TAG )"/>
+        </do_elseif>
+        <do_elseif value="$USED_VARIANT" exact="6">
+          <set_value name="$ShipName" exact="( $FRONT_TAG + $NUMBER_TAG + $TYPE_NAME + $MODEL_NAME + $CLASS_NAME + $BACK_TAG )"/>
+        </do_elseif>
+
+        <remove_value name="$NUMBER_TAG"/>
+        <remove_value name="$BACK_TAG"/>
+        <remove_value name="$FRONT_TAG"/>
+        <remove_value name="$TYPE_NAME"/>
+        <remove_value name="$MODEL_NAME"/>
+        <remove_value name="$CLASS_NAME"/>
+
+      </do_else>
+
+      <set_object_name object="$SHIP" name="$ShipName"/>
+
+      <remove_value name="$ShipName"/>
+      <remove_value name="$OwnNameString"/>
+      <remove_value name="$OwnTagString"/>
+      <remove_value name="$ShipTypeName"/>
+      <remove_value name="$ShipModelName"/>
+      <remove_value name="$ShipClassName"/>
+    </actions>
+  </attention>
+
+</aiscript>

@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<aiscript name="JP_ExploreSector" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="aiscripts.xsd">
+
+  <order id ="JP_ExploreSector" name="Explores an Sector" category="internal" infinite="false">
+    <params>
+      <param name="SHIP" type="object" text="ShipObject"/>
+      <param name="FIND_GATES" type="bool" text="FindGates"/>
+      <param name="FIND_STATIONS" type="bool" text="FindStations"/>
+      <param name="SECTOR_TO_EXPLORE" type="object" text="SectorToExplore"/>
+      <param name="EXPLORE_ENEMY_STATIONS" type="bool" text="Explore Enemy Stations?"/>
+      <param name="DEBUG" type="bool" text="DebugText"/>
+    </params>
+  </order>
+
+  <interrupts>
+    <handler ref="SectorChangeHandler"/>
+    <handler ref="TargetInvalidHandler"/>
+    <handler ref="AttackHandler"/>
+    <handler ref="MissileLockHandler" />
+    <handler ref="ScannedHandler"/>
+    <handler ref="InspectedHandler"/>
+    <handler ref="FoundAbandonedHandler"/>
+    <handler ref="FoundLockboxHandler"/>
+    <handler ref="ResupplyHandler"/>
+    <handler ref="JobRemoveRequestHandler" />
+  </interrupts>
+
+  <init>
+  </init>
+
+  <attention min="unknown">
+    <actions>
+
+      <do_if value="$DEBUG">
+        <debug_text text="'Exploring Sector %1'.[$SECTOR_TO_EXPLORE.name]"/>
+      </do_if>
+
+      <!-- Find Gates ~~~~~~~~~~~~~~~~~~~~~  -->
+
+      <do_if value="$FIND_GATES">
+        <create_list name="$Gates"/>
+        <run_script name="'JP_FindAllGatesInSector'">
+          <param name="SHIP" value="$SHIP"/>
+          <param name="SECTOR_TO_EXPLORE" value="$SECTOR_TO_EXPLORE"/>
+          <param name="DEBUG" value="$DEBUG"/>
+          <save_retval name="GATES" variable="$Gates" />
+        </run_script>
+        <do_if value="$Gates.count gt 0">
+          <do_if value="$DEBUG">
+            <debug_text text="'Gates to explore: %1'.[$Gates.count]"/>
+          </do_if>
+          <do_all exact="$Gates.count" counter="$_jt">
+            <do_if value="$DEBUG">
+              <debug_text text="'Exploring Gate: %1'.[$Gates.{$_jt}.knownname]"/>
+            </do_if>
+            <check_object object="$Gates.{$_jt}" knownto="$SHIP.owner" result="$isKnown"/>
+            <do_if value="$isKnown" negate="true">
+              <set_command command="command.movetozone" param="$Gates.{$_jt}"/>
+              <set_command_action commandaction ="commandaction.flyingto" param="$Gates.{$_jt}"/>
+              <run_script name="'move.generic'">
+                <param name="destination" value="$Gates.{$_jt}" />
+                <param name="endintargetzone" value="true"/>
+              </run_script>
+            </do_if>
+          </do_all>
+        </do_if>
+        <remove_value name="$Gates"/>
+      </do_if>
+
+      <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+      <!-- Find Stations ~~~~~~~~~~~~~~~~~~~~~  -->
+
+      <do_if value="$FIND_STATIONS">
+        <create_list name="$Stations"/>
+        <run_script name="'JP_FindAllStationsInSector'">
+          <param name="SHIP" value="$SHIP"/>
+          <param name="SECTOR_TO_EXPLORE" value="$SECTOR_TO_EXPLORE"/>
+          <param name="DEBUG" value="$DEBUG"/>
+          <save_retval name="STATIONS" variable="$Stations" />
+        </run_script>
+        <do_if value="$Stations.count gt 0">
+          <do_if value="$EXPLORE_ENEMY_STATIONS" negate="true">
+            <create_list name="$StationsToRemove"/>
+            <do_all exact="$Stations.count" counter="$_xt">
+              <do_if value="$Stations.{$_xt}.owner.mayattack.{$SHIP.owner}">
+                <append_to_list name="$StationsToRemove" exact="$Stations.{$_xt}"/>
+              </do_if>
+            </do_all>
+            <remove_from_list name="$Stations" list="$StationsToRemove"/>
+            <remove_value name="$StationsToRemove"/>
+          </do_if>
+          <do_if value="$DEBUG">
+            <show_help custom="'Stations to explore: %1'.[$Stations.count]" duration="1s" log="true"/>
+            <debug_text text="'Stations to explore: %1'.[$Stations.count]"/>
+          </do_if>
+          <do_all exact="$Stations.count" counter="$_jt">
+            <do_if value="$DEBUG">
+              <show_help custom="'Exploring Station: %1'.[$Stations.{$_jt}.knownname]" duration="1s" log="true"/>
+              <debug_text text="'Exploring Station: %1'.[$Stations.{$_jt}.knownname]"/>
+            </do_if>
+            <check_object object="$Stations.{$_jt}" knownto="faction.player" result="$isKnown"/>
+            <do_if value="$isKnown" negate="true">
+              <set_command command="command.movetozone" param="$Stations.{$_jt}"/>
+              <set_command_action commandaction ="commandaction.flyingto" param="$Stations.{$_jt}"/>
+              <run_script name="'move.generic'">
+                <param name="destination" value="$Stations.{$_jt}" />
+                <param name="endintargetzone" value="true"/>
+              </run_script>
+            </do_if>
+          </do_all>
+        </do_if>
+        <remove_value name="$Stations"/>
+      </do_if>
+
+      <wait exact="1ms"/>
+    </actions>
+  </attention>
+
+  <on_abort>
+  </on_abort>
+
+</aiscript>
