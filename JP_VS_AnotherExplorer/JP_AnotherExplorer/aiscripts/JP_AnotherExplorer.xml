@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<aiscript name="JP_AnotherExplorer" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="aiscripts.xsd">
+
+  <order id="JP_AnotherExplorer" name="JP AnotherExplorer" description="Another explorer logic" category="navigation" infinite="true">
+    <params>
+      <param name="SectorToExplore" type="object" default="this.sector" text="Sector to explore">
+        <input_param name="class" value="[class.sector]"/>
+      </param>
+      <param name="HomeSector" type="object" default="this.sector" text="Home Position or Station">
+        <input_param name="class" value="[class.sector, class.station]"/>
+      </param>
+      <param name="FIND_GATES" required="false" type="bool" default="true" text="Discover Gates?"/>
+      <param name="FIND_STATIONS" required="false" type="bool" default="true" text="Discover Stations?"/>
+      <param name="EntireGalaxy" required="false" type="bool" default="false" text="Explore Galaxy?"/>
+      <param name="EXPLORE_ENEMY_SECTORS" required="false" type="bool" default="false" text="Explore Enemy Sectors?"/>
+      <param name="EXPLORE_ENEMY_STATIONS" required="false" type="bool" default="false" text="Explore Enemy Stations?"/>
+      <param name="ReturnHome" required="false" type="bool" default="true" text="Return Home?"/>
+      <param name="DEBUG" required="false" type="bool" default="false" text="Debug text" advanced="true"/>
+    </params>
+    <skill min="0"/>
+    <requires>
+      <match shiptype="shiptype.lasertower" negate="true"/>
+    </requires>
+  </order>
+
+  <interrupts>
+    <handler ref="SectorChangeHandler"/>
+    <handler ref="TargetInvalidHandler"/>
+    <handler ref="AttackHandler"/>
+    <handler ref="MissileLockHandler" />
+    <handler ref="ScannedHandler"/>
+    <handler ref="InspectedHandler"/>
+    <handler ref="FoundAbandonedHandler"/>
+    <handler ref="FoundLockboxHandler"/>
+    <handler ref="ResupplyHandler"/>
+    <handler ref="JobRemoveRequestHandler" />
+  </interrupts>
+
+  <init>
+  </init>
+
+  <attention min="unknown">
+    <actions>
+
+      <wait exact="1ms"/>
+      <label name="START"/>
+      <set_value name="$RUNNING" exact="true"/>
+      <set_value name="$SHIP" exact="this.ship"/>
+
+      <label name="RESUME"/>
+
+      <!-- Find Sectors -->
+      <create_list name="$SECTORS"/>
+      <find_sector name="$SECTORS" space="player.galaxy" multiple="true"/>
+      <!-- Exlude Enemy Sectors ?-->
+      <do_if value="$EXPLORE_ENEMY_SECTORS == false">
+        <create_list name="$SECTORS_TO_REMOVE"/>
+        <do_all exact="$SECTORS.count" counter="$_it">
+          <do_if value="$SECTORS.{$_it}.owner.mayattack.{$SHIP}">
+            <append_to_list name="$SECTORS_TO_REMOVE" exact="$SECTORS.{$_it}"/>
+          </do_if>
+        </do_all>
+        <remove_from_list name="$SECTORS" list="$SECTORS_TO_REMOVE"/>
+        <remove_value name="$SECTORS_TO_REMOVE"/>
+      </do_if>
+
+      <!-- Remove all sectors where all objects are discoverd -->
+      <create_list name="$SECTORS_TO_REMOVE"/>
+      <do_all exact="$SECTORS.count" counter="$_it">
+        <run_script name="'JP_HasUnknownObjects'">
+          <param name="SHIP" value="$SHIP"/>
+          <param name="SECTOR" value="$SECTORS.{$_it}"/>
+          <param name="DEBUG" value="$DEBUG"/>
+          <save_retval name="HAS_UNKNOWN_OBJECTS" variable="$HAS_UNKNOWN_OBJECTS" />
+        </run_script>
+        <do_if value="$HAS_UNKNOWN_OBJECTS" negate="true">
+          <append_to_list name="$SECTORS_TO_REMOVE" exact="$SECTORS.{$_it}"/>
+        </do_if>
+      </do_all>
+      <remove_from_list name="$SECTORS" list="$SECTORS_TO_REMOVE"/>
+      <remove_value name="$SECTORS_TO_REMOVE"/>
+
+      <!-- Sort Sectors by Distance to the ship -->
+      <create_list name="$SORTED_SECTORS"/>
+      <do_while value="$SECTORS.count gt 0">
+        <set_value name="$INDEX" exact="0"/>
+        <set_value name="$BIGGEST_DISTANCE" exact="0"/>
+        <do_all exact="$SECTORS.count" counter="$_it">
+          <do_if value="$SHIP.distanceto.{$SECTORS.{$_it}} gt $BIGGEST_DISTANCE">
+            <set_value name="$BIGGEST_DISTANCE" exact="$SHIP.distanceto.{$SECTORS.{$_it}}"/>
+            <set_value name="$INDEX" exact="$_it"/>
+          </do_if>
+        </do_all>
+        <append_to_list name="$SORTED_SECTORS" exact="$SECTORS.{$INDEX}"/>
+        <remove_from_list name="$SECTORS" list="$SORTED_SECTORS"/>
+      </do_while>
+      <remove_value name="$SECTORS"/>
+
+      <do_if value="$DEBUG">
+        <do_all exact="$SORTED_SECTORS.count" counter="$_it" reverse="true">
+          <debug_text text="'%1  ~~  %2'.[$SHIP.distanceto.{$SORTED_SECTORS.{$_it}}, $SORTED_SECTORS.{$_it}.knownname]"/>
+        </do_all>
+      </do_if>
+
+      <!-- Explore nearest sector -->
+      <do_if value="$DEBUG">
+        <debug_text text="'Exploring sector %1'.[$SORTED_SECTORS.last.knownname]"/>
+      </do_if>
+      <run_script name="'JP_ExploreSector'">
+        <param name="SHIP" value="$SHIP"/>
+        <param name="FIND_GATES" value="$FIND_GATES"/>
+        <param name="FIND_STATIONS" value="$FIND_STATIONS"/>
+        <param name="SECTOR_TO_EXPLORE" value="$SORTED_SECTORS.last"/>
+        <param name="EXPLORE_ENEMY_STATIONS" value="$EXPLORE_ENEMY_STATIONS"/>
+        <param name="DEBUG" value="$DEBUG"/>
+      </run_script>
+
+      <label name="CLEARING"/>
+      <remove_value name="$SORTED_SECTORS"/>
+
+      <do_if value="$RUNNING">
+        <wait exact="10s"/>
+        <resume label="RESUME"/>
+      </do_if>
+
+      <!-- Return Home? ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+      <do_if value="$ReturnHome">
+        <do_if value="$HomeSector.isclass.space">
+          <run_script name="'move.generic'">
+            <param name="destination" value="$HomeSector" />
+            <param name="endintargetzone" value="true" />
+          </run_script>
+          <run_script name="'move.idle'">
+            <param name="TimeOut" value="10s" />
+          </run_script>
+        </do_if>
+        <do_if value="$HomeSector.isclass.station">
+          <run_script name="'order.dock'">
+            <param name="destination" value="$HomeSector" />
+          </run_script>
+        </do_if>
+      </do_if>
+
+      <!-- All done ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+      <do_if value="$Debug">
+        <debug_text text="'Explorer %1 ~~ %2 is done with the workand drinks a cup of tea'.[this.ship.name, this.ship.idcode]"/>
+      </do_if>
+
+      <label name="FINISH"/>
+      <remove_value name="$SHIP"/>
+      <remove_value name="$RUNNING"/>
+      <set_order_syncpoint_reached order="this.ship.order"/>
+      <cancel_order order="this.ship.order" />
+      <wait exact="1ms"/>
+
+    </actions>
+  </attention>
+
+  <on_abort>
+  </on_abort>
+
+</aiscript>
