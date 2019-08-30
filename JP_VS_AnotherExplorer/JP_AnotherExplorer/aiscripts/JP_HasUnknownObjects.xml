@@ -6,6 +6,7 @@
     <params>
       <param name="SHIP" type="internal" default="NULL"/>
       <param name="SECTOR" type="internal" default="NULL"/>
+      <param name="ENEMY_STATIONS" type="internal" default="NULL"/>
       <param name="DEBUG" type="internal" default="false"/>
     </params>
   </order>
@@ -18,30 +19,31 @@
 
       <wait exact="1ms"/>
       <label name="START"/>
-      <create_list name="$GATES"/>
-      <create_list name="$STATIONS"/>
+      <create_list name="$UNKNOWN_GATES"/>
+      <create_list name="$UNKNOWN_STATIONS"/>
       <create_list name="$KNOWN_GATES"/>
       <create_list name="$KNOWN_STATIONS"/>
       <set_value name="$HAS_UNKNOWN_OBJECTS" exact="false"/>
 
-      <do_if value="$SECTOR.isclass.sector">
-        <find_station name="$UNKNOWN_STATIONS" multiple="true" space="$SECTOR"/>
-        <find_station name="$KNOWN_STATIONS" multiple="true" space="$SECTOR" knownto="$SHIP.owner"/>
-        <remove_from_list name="$UNKNOWN_STATIONS" exact="$KNOWN_STATIONS"/>
-        <remove_value name="$KNOWN_STATIONS"/>
-        <find_gate name="$UNKNOWN_GATES" multiple="true" space="$SECTOR"/>
-        <find_gate name="$KNOWN_GATES" multiple="true" space="$SECTOR" knownto="$SHIP.owner"/>
-        <remove_from_list name="$UNKNOWN_GATES" exact="$KNOWN_GATES"/>
-        <remove_value name="$KNOWN_GATES"/>
-        <do_if value="$UNKNOWN_GATES.count gt 0 or $UNKNOWN_STATIONS.count gt 0">
-          <set_value name="$HAS_UNKNOWN_OBJECTS" exact="true"/>
-        </do_if>
-        <remove_value name="$UNKNOWN_STATIONS"/>
-        <remove_value name="$UNKNOWN_GATES"/>
+      <find_station name="$UNKNOWN_STATIONS" multiple="true" space="$SECTOR"/>
+      <find_station name="$KNOWN_STATIONS" multiple="true" space="$SECTOR" knownto="$SHIP.owner"/>
+      <remove_from_list name="$UNKNOWN_STATIONS" list="$KNOWN_STATIONS"/>
+      <remove_value name="$KNOWN_STATIONS"/>
+      <find_gate name="$UNKNOWN_GATES" multiple="true" space="$SECTOR"/>
+      <find_gate name="$KNOWN_GATES" multiple="true" space="$SECTOR" knownto="$SHIP.owner"/>
+      <remove_from_list name="$UNKNOWN_GATES" list="$KNOWN_GATES"/>
+      <remove_value name="$KNOWN_GATES"/>
+      <do_if value="$ENEMY_STATIONS == false">
+        <create_list name="$ENEMY_STATIONS_LIST"/>
+        <find_station name="$ENEMY_STATIONS_LIST" multiple="true" space="$SECTOR" mayattack="$SHIP"/>
+        <remove_from_list name="$UNKNOWN_STATIONS" list="$ENEMY_STATIONS_LIST"/>
+        <remove_value name="$ENEMY_STATIONS_LIST"/>
       </do_if>
-      <do_else>
-        <resume label="BREAK"/>
-      </do_else>
+      <do_if value="$UNKNOWN_GATES.count gt 0 or $UNKNOWN_STATIONS.count gt 0">
+        <set_value name="$HAS_UNKNOWN_OBJECTS" exact="true"/>
+      </do_if>
+      <remove_value name="$UNKNOWN_STATIONS"/>
+      <remove_value name="$UNKNOWN_GATES"/>
 
       <label name="RETURN"/>
       <return>
@@ -49,7 +51,6 @@
       </return>
 
       <label name="BREAK"/>
-      <debug_text text="'SECTOR variable is not a sector!'"/>
       <set_value name="$HAS_UNKNOWN_OBJECTS" exact="NULL"/>
       <wait exact="1ms"/>
 

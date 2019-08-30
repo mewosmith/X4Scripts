@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<content id="JP_AnotherExplorer" name="JP_AnotherExplorer" description="Another explorer logic." author="JanPanthera" version="035" date="2019-08-08" save="0" enabled="1">
+<content id="JP_AnotherExplorer" name="JP_AnotherExplorer" description="Another explorer logic." author="JanPanthera" version="040" date="2019-08-30" save="0" enabled="1">
   <text language="7"  name="JP_AnotherExplorer" description="Another explorer logic." author="JanPanthera"/>
   <text language="33" name="JP_AnotherExplorer" description="Another explorer logic." author="JanPanthera"/>
   <text language="34" name="JP_AnotherExplorer" description="Another explorer logic." author="JanPanthera"/>
