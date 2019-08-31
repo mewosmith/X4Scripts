@@ -126,6 +126,7 @@
     <Xsd Include="JP_CollectDroppedCargo\aiscripts\aiscripts.xsd" />
   </ItemGroup>
   <ItemGroup>
+    <Xml Include="JP_CollectDroppedCargo\aiscripts\JP_CanCarryWare.xml" />
     <Xml Include="JP_CollectDroppedCargo\aiscripts\JP_CollectDroppedCargo.xml" />
     <Xml Include="JP_CollectDroppedCargo\content.xml" />
   </ItemGroup>

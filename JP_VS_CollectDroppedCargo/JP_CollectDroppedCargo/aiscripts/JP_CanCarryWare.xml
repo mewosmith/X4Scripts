@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<aiscript name="JP_CanCarryWare" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="aiscripts.xsd">
+
+  <order id ="JP_CanCarryWare" name="true if ship can carry given ware" category="internal" infinite="false">
+    <params>
+      <param name="SHIP" type="internal" default="NULL"/>
+      <param name="CONTAINER" type="internal" default="NULL"/>
+      <param name="DEBUG" type="internal" default="false"/>
+    </params>
+  </order>
+
+  <init>
+  </init>
+
+  <attention min="unknown">
+    <actions>
+
+      <wait exact="1ms"/>
+      <label name="START"/>
+      <set_value name="$CanCarry" exact="false"/>
+
+      <do_all exact="$CONTAINER.wares.count" counter="$_it">
+        <set_value name="$Ware" exact="$CONTAINER.wares.list.{$_it}"/>
+        <do_if value="$Ware.isinventory or $SHIP.cargo.{$Ware}.free">
+          <set_value name="$CanCarry" exact="true"/>
+          <break/>
+        </do_if>
+      </do_all>
+
+      <label name="RETURN"/>
+      <return>
+        <retval name="CAN_CARRY" value="$CanCarry" />
+      </return>
+
+      <label name="BREAK"/>
+      <wait exact="1ms"/>
+
+    </actions>
+  </attention>
+
+</aiscript>

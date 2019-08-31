@@ -4,11 +4,11 @@
 
   <order id="JP_CollectDroppedCargo" name="JP CollectDroppedCargo" description="Collects dropped cargo." category="navigation" infinite="true">
     <params>
-      <param name="SECTOR" type="object" default="this.sector" text="{20001, 201}" required="true">
+      <param name="SECTOR" type="object" default="this.sector" text="{20001, 201}">
         <input_param name="class" value="[class.sector]"/>
       </param>
       <param name="INSTANT" type="bool" default="false" text="Instant?"/>
-      <param name="DEBUG" text="Debug" type="bool" default="false" advanced="true"/>
+      <param name="DEBUG" text="Debug" type="bool" default="true" advanced="true"/>
     </params>
     <skill min="0"/>
     <requires>
@@ -43,60 +43,65 @@
       <label name="$RESUME"/>
 
       <create_list name="$DroppedCargo"/>
-      <create_list name="$TempDroppedCargo"/>
-      <find_object name="$TempDroppedCargo" space="$SECTOR" multiple="true" canbepickedup="true">
-        <match_any>
-          <match class="class.collectablewares"/>
-          <match class="class.collectableammo"/>
-        </match_any>
+      <create_list name="$DroppedCargoSorted"/>
+
+      <find_object name="$DroppedCargo" space="$SECTOR" multiple="true">
+        <match class="class.collectablewares"/>
       </find_object>
 
       <!-- Sort all objects by distance to the ship -->
-      <do_while value="$TempDroppedCargo.count gt 0">
+      <do_while value="$DroppedCargo.count gt 0">
         <set_value name="$index" exact="0"/>
         <set_value name="$biggestDistance" exact="0"/>
-        <do_all exact="$TempDroppedCargo.count" counter="$_it">
-          <do_if value="$SHIP.distanceto.{$TempDroppedCargo.{$_it}} gt $biggestDistance">
-            <set_value name="$biggestDistance" exact="$SHIP.distanceto.{$TempDroppedCargo.{$_it}}"/>
+        <do_all exact="$DroppedCargo.count" counter="$_it">
+          <do_if value="$SHIP.distanceto.{$DroppedCargo.{$_it}} gt $biggestDistance">
+            <set_value name="$biggestDistance" exact="$SHIP.distanceto.{$DroppedCargo.{$_it}}"/>
             <set_value name="$index" exact="$_it"/>
           </do_if>
         </do_all>
-        <append_to_list name="$DroppedCargo" exact="$TempDroppedCargo.{$index}"/>
-        <remove_from_list name="$TempDroppedCargo" list="$DroppedCargo"/>
+        <append_to_list name="$DroppedCargoSorted" exact="$DroppedCargo.{$index}"/>
+        <remove_from_list name="$DroppedCargo" list="$DroppedCargoSorted"/>
       </do_while>
-      <remove_value name="$TempDroppedCargo"/>
+      <remove_value name="$DroppedCargo"/>
 
       <do_if value="$DEBUG">
-        <do_all exact="$DroppedCargo.count" counter="$_it" reverse="true">
-          <debug_text text="'%1  ~~  %2 [%3]'.[$SHIP.distanceto.{$DroppedCargo.{$_it}}, $DroppedCargo.{$_it}.class, $DroppedCargo.{$_it}.idcode]"/>
+        <do_all exact="$DroppedCargoSorted.count" counter="$_it" reverse="true">
+          <debug_text text="'%1  ~~  %2 [%3]'.[$SHIP.distanceto.{$DroppedCargoSorted.{$_it}}, $DroppedCargoSorted.{$_it}.class, $DroppedCargoSorted.{$_it}.idcode]"/>
         </do_all>
       </do_if>
 
+      <!-- Collect the objects -->
       <do_if value="$INSTANT">
+        <do_all exact="$DroppedCargoSorted.count" counter="$_it" reverse="true">
+          <debug_text text="'Collect %1 [%2]'.[$DroppedCargoSorted.{$_it}.class, $DroppedCargoSorted.{$_it}.idcode]"/>
+          <collect_drop drop="$DroppedCargoSorted.{$_it}" object="$SHIP"/>
+        </do_all>
       </do_if>
       <do_else>
-        <do_all exact="$DroppedCargo.count" counter="$_it" reverse="true">
-          <set_value name="$Wares" exact="$DroppedCargo.{$_it}.wares.list"/>
-          <debug_text text="'Wares Count: %1'.[$Wares.count]"/>
-          <do_all exact="$Wares.count" counter="$_jt">
-            <debug_text text="'%1 ~~ %2  ~~  %3 ~~ %4  ~~  %5'.[$Wares.{$_jt}.isammo, $Wares.{$_jt}.isinventory, $SHIP.ammostorage.{$Wares.{$_jt}}.free, $SHIP.cargo.{$Wares.{$_jt}}.free, $Wares]"/>
-            <do_if value="$Wares.{$_jt}.isammo and $SHIP.ammostorage.{$Wares.{$_jt}}.free">
-              <debug_text text="'isammo ' + $Wares.{$_jt}"/>
-              <debug_text text="$DroppedCargo.{$_it}.class"/>
-            </do_if>
-            <do_elseif value="$Wares.{$_jt}.isinventory and $SHIP.cargo.{$Wares.{$_jt}}.free">
-              <debug_text text="'isinventory ' + $Wares.{$_jt}"/>
-              <debug_text text="$DroppedCargo.{$_it}.class"/>
-            </do_elseif>
-            <do_else>
-              <!--<run_script name="'move.generic'">
-                <param name="destination" value="$DroppedCargo.{$_it}"/>
+
+        <do_all exact="$DroppedCargoSorted.count" counter="$_it" reverse="true">
+
+          <!-- Can i collect the object ? -->
+          <run_script name="'JP_CanCarryWare'">
+            <param name="SHIP" value="$SHIP"/>
+            <param name="CONTAINER" value="$DroppedCargoSorted.{$_it}"/>
+            <save_retval name="CAN_CARRY" variable="$CanCarry"/>
+          </run_script>
+          <!--<debug_text text="'%1  ~~  %2'.[$DroppedCargoSorted.{$_it}.wares.list.last.isinventory, $DroppedCargoSorted.{$_it}.wares.list.last.canbepickedupby.{$SHIP}]"/>-->
+          <do_if value="$CanCarry">
+            
+            <debug_text text="'Collect %1 ~~ %2 [%3]\n'.[$DroppedCargoSorted.{$_it}.class, $DroppedCargoSorted.{$_it}.wares.list, $DroppedCargoSorted.{$_it}.idcode]"/>
+
+            <do_if value="1">
+              <run_script name="'move.generic'">
+                <param name="destination" value="$DroppedCargoSorted.{$_it}"/>
               </run_script>
-              <collect_drop drop="$DroppedCargo.{$_it}" object="$SHIP"/>-->
-            </do_else>
-          </do_all>
-          <remove_value name="$Wares"/>
+              <collect_drop drop="$DroppedCargoSorted.{$_it}" object="$SHIP"/>
+            </do_if>
+          
+          </do_if>
         </do_all>
+
       </do_else>
 
       <remove_value name="$DroppedCargo"/>
