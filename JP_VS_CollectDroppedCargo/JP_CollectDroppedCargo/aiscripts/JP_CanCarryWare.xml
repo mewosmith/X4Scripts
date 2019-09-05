@@ -25,6 +25,9 @@
         <do_if value="$Ware.isinventory or not $Ware.isinventory and $SHIP.cargo.{$Ware}.free">
           <set_value name="$CanCarry" exact="true"/>
         </do_if>
+        <do_else>
+          <set_value name="$CanCarry" exact="false"/>
+        </do_else>
         <remove_value name="$Ware"/>
       </do_all>
 
