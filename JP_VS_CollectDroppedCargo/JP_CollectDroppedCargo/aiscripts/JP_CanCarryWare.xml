@@ -22,10 +22,10 @@
 
       <do_all exact="$CONTAINER.wares.count" counter="$_it">
         <set_value name="$Ware" exact="$CONTAINER.wares.list.{$_it}"/>
-        <do_if value="$Ware.isinventory or $SHIP.cargo.{$Ware}.free">
+        <do_if value="$Ware.isinventory or not $Ware.isinventory and $SHIP.cargo.{$Ware}.free">
           <set_value name="$CanCarry" exact="true"/>
-          <break/>
         </do_if>
+        <remove_value name="$Ware"/>
       </do_all>
 
       <label name="RETURN"/>

@@ -50,6 +50,23 @@
         <match class="class.collectablewares"/>
       </find_object>
 
+      <!-- Check here for CanCarryWare -->
+      <create_list name="$DroppedCargoToRemove"/>
+      <do_all exact="$DroppedCargo.count" counter="$_it">
+        <run_script name="'JP_CanCarryWare'">
+          <param name="SHIP" value="$SHIP"/>
+          <param name="CONTAINER" value="$DroppedCargo.{$_it}"/>
+          <save_retval name="CAN_CARRY" variable="$CanCarry"/>
+        </run_script>
+        <do_if value="not $CanCarry">
+          <append_to_list name="$DroppedCargoToRemove" exact="$DroppedCargo.{$_it}"/>
+        </do_if>
+        <remove_value name="$CanCarry"/>
+      </do_all>
+      <remove_from_list name="$DroppedCargo" list="$DroppedCargoToRemove"/>
+      <remove_value name="$DroppedCargoToRemove"/>
+
+      <!-- Do we have cargo to collect? -->
       <do_if value="$DroppedCargo.count gt 0">
 
         <!-- Sort all objects by distance to the ship -->
@@ -64,6 +81,8 @@
           </do_all>
           <append_to_list name="$DroppedCargoSorted" exact="$DroppedCargo.{$index}"/>
           <remove_from_list name="$DroppedCargo" list="$DroppedCargoSorted"/>
+          <remove_value name="$biggestDistance"/>
+          <remove_value name="$index"/>
         </do_while>
         <remove_value name="$DroppedCargo"/>
 
@@ -76,70 +95,45 @@
         <!-- Collect the objects -->
         <do_if value="$INSTANT">
           <do_all exact="$DroppedCargoSorted.count" counter="$_it" reverse="true">
-            <do_if value="$DroppedCargoSorted.{$_it}.exists">
-              <!-- Can i collect the object ? -->
-              <run_script name="'JP_CanCarryWare'">
-                <param name="SHIP" value="$SHIP"/>
-                <param name="CONTAINER" value="$DroppedCargoSorted.{$_it}"/>
-                <save_retval name="CAN_CARRY" variable="$CanCarry"/>
-              </run_script>
-              <do_if value="$CanCarry">
-                <do_if value="$DEBUG">
-                  <debug_text text="'~~~ Collecting %1 ~~~'.[$DroppedCargoSorted.{$_it}.wares.list]"/>
-                </do_if>
-                <collect_drop drop="$DroppedCargoSorted.{$_it}" object="$SHIP"/>
+            <do_if value="$DroppedCargoSorted.{$_it}.exists and not $DroppedCargoSorted.{$_it}.iswreck">
+              <do_if value="$DEBUG">
+                <debug_text text="'~~~ Collecting %1 ~~~'.[$DroppedCargoSorted.{$_it}.wares.list]"/>
               </do_if>
+              <collect_drop drop="$DroppedCargoSorted.{$_it}" object="$SHIP"/>
             </do_if>
           </do_all>
         </do_if>
         <do_else>
           <do_if value="$INFINITE">
-            <do_if value="$DroppedCargoSorted.last.exists">
-              <!-- Can i collect the object ? -->
-              <run_script name="'JP_CanCarryWare'">
-                <param name="SHIP" value="$SHIP"/>
-                <param name="CONTAINER" value="$DroppedCargoSorted.last"/>
-                <save_retval name="CAN_CARRY" variable="$CanCarry"/>
-              </run_script>
-              <do_if value="$CanCarry">
-                <do_if value="$DEBUG">
-                  <debug_text text="'~~~ Collecting %1 ~~~'.[$DroppedCargoSorted.last.wares.list]"/>
-                </do_if>
-                <run_script name="'move.generic'">
-                  <param name="destination" value="$DroppedCargoSorted.last"/>
-                </run_script>
-                <collect_drop drop="$DroppedCargoSorted.last" object="$SHIP"/>
+            <do_if value="$DroppedCargoSorted.last.exists and not $DroppedCargoSorted.last.iswreck">
+              <do_if value="$DEBUG">
+                <debug_text text="'~~~ Collecting %1 ~~~'.[$DroppedCargoSorted.last.wares.list]"/>
               </do_if>
+              <run_script name="'move.generic'">
+                <param name="destination" value="$DroppedCargoSorted.last"/>
+              </run_script>
+              <collect_drop drop="$DroppedCargoSorted.last" object="$SHIP"/>
             </do_if>
           </do_if>
           <do_else>
             <do_all exact="$DroppedCargoSorted.count" counter="$_it" reverse="true">
-              <do_if value="$DroppedCargoSorted.{$_it}.exists">
-                <!-- Can i collect the object ? -->
-                <run_script name="'JP_CanCarryWare'">
-                  <param name="SHIP" value="$SHIP"/>
-                  <param name="CONTAINER" value="$DroppedCargoSorted.{$_it}"/>
-                  <save_retval name="CAN_CARRY" variable="$CanCarry"/>
-                </run_script>
-                <do_if value="$CanCarry">
-                  <do_if value="$DEBUG">
-                    <debug_text text="'~~~ Collecting %1 ~~~'.[$DroppedCargoSorted.{$_it}.wares.list]"/>
-                  </do_if>
-                  <run_script name="'move.generic'">
-                    <param name="destination" value="$DroppedCargoSorted.{$_it}"/>
-                  </run_script>
-                  <collect_drop drop="$DroppedCargoSorted.{$_it}" object="$SHIP"/>
+              <do_if value="$DroppedCargoSorted.{$_it}.exists and not $DroppedCargoSorted.{$_it}.iswreck">
+                <do_if value="$DEBUG">
+                  <debug_text text="'~~~ Collecting %1 ~~~'.[$DroppedCargoSorted.{$_it}.wares.list]"/>
                 </do_if>
+                <run_script name="'move.generic'">
+                  <param name="destination" value="$DroppedCargoSorted.{$_it}"/>
+                </run_script>
+                <collect_drop drop="$DroppedCargoSorted.{$_it}" object="$SHIP"/>
               </do_if>
             </do_all>
           </do_else>
         </do_else>
 
-
       </do_if>
       <do_else>
         <do_if value="$DEBUG">
-          <debug_text text="'~~~ Nothing to collect or cargobay is full! ~~~'"/>
+          <debug_text text="'Nothing found to collect or Cargo bay is full.'"/>
         </do_if>
       </do_else>
 
@@ -149,7 +143,7 @@
       </do_if>
 
       <do_if value="$RUNNING">
-        <wait min="2s" max="4s"/>
+        <wait min="2s" max="8s"/>
         <resume label="$RESUME"/>
       </do_if>
 
