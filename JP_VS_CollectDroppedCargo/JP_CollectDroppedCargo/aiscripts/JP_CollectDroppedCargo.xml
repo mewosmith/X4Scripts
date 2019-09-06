@@ -9,6 +9,7 @@
       </param>
       <param name="COLLECT_CARGO" type="bool" default="true" text="Collect Cargo items?"/>
       <param name="COLLECT_INVENTORY" type="bool" default="true" text="Collect Inventory items?"/>
+      <param name="IGNORE_ATTACKERS" type="bool" default="false" text="Ignore attackers?"/>
       <param name="INSTANT" type="bool" default="false" text="Instant?"/>
       <param name="INFINITE" type="bool" default="false" text="Infinite search?"/>
       <param name="DEBUG" text="Debug" type="bool" default="false" advanced="true"/>
@@ -22,7 +23,11 @@
   <interrupts>
     <handler ref="SectorChangeHandler"/>
     <handler ref="TargetInvalidHandler"/>
-    <handler ref="AttackHandler"/>
+    <handler ref="AttackHandler" >
+      <conditions>
+        <check_value value="not $IGNORE_ATTACKERS"/>
+      </conditions>
+    </handler>
     <handler ref="MissileLockHandler" />
     <handler ref="ScannedHandler"/>
     <handler ref="InspectedHandler"/>
@@ -57,6 +62,8 @@
       <do_all exact="$DroppedCargo.count" counter="$_it">
         <run_script name="'JP_CanCarryWare'">
           <param name="SHIP" value="$SHIP"/>
+          <param name="COLLECT_CARGO" value="$COLLECT_CARGO"/>
+          <param name="COLLECT_INVENTORY" value="$COLLECT_INVENTORY"/>
           <param name="CONTAINER" value="$DroppedCargo.{$_it}"/>
           <save_retval name="CAN_CARRY" variable="$CanCarry"/>
         </run_script>
