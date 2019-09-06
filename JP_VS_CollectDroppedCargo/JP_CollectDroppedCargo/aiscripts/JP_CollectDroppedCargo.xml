@@ -7,6 +7,8 @@
       <param name="SECTOR" type="object" default="this.sector" text="{20001, 201}">
         <input_param name="class" value="[class.sector]"/>
       </param>
+      <param name="COLLECT_CARGO" type="bool" default="true" text="Collect Cargo items?"/>
+      <param name="COLLECT_INVENTORY" type="bool" default="true" text="Collect Inventory items?"/>
       <param name="INSTANT" type="bool" default="false" text="Instant?"/>
       <param name="INFINITE" type="bool" default="false" text="Infinite search?"/>
       <param name="DEBUG" text="Debug" type="bool" default="false" advanced="true"/>

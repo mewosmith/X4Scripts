@@ -4,10 +4,10 @@
 
   <order id="JP_TestMod" name="JP TestScript" category="navigation" infinite="true">
     <params>
-      <param name="destination" type="position" text="{1041, 10027}">
-        <input_param name="class" value="class.sector"/>
+      <param name="OBJECT" type="object" default="this.sector" text="Object">
+        <input_param name="class" value="[class.object]"/>
       </param>
-      <param name="DEBUG" text="Debug" type="bool" default="false"/>
+      <param name="DEBUG" text="Debug" type="bool" default="true"/>
     </params>
     <skill min="0"/>
     <requires>
@@ -33,14 +33,18 @@
 
   <attention min="unknown">
     <actions>
- 
-      <set_value name="$targetsector" exact="$destination.{1}"/>
-      <set_value name="$pos" exact="$destination.{2}"/>
 
+      <label name="START"/>
       <cancel_all_orders object="this.ship"/>
-      <warp object="this.object" sector="$targetsector">
-        <position x="$pos.x" y="$pos.y" z="$pos.z"/>
-      </warp>
+
+      <!-- Find DataVaults -->
+      <find_object name="$RESULT" space="player.galaxy" multiple="true">
+        <match macro="[macro.landmarks_vault_01_macro, macro.landmarks_vault_02_macro, macro.landmarks_vault_03_macro, macro.landmarks_vault_04_macro, macro.landmarks_vault_05_macro]"/>
+      </find_object>
+
+      <do_all exact="$RESULT.count" counter="$_it">
+        <debug_text text="'%1'.[$RESULT.{$_it}.knownname]"/>
+      </do_all>
 
       <label name="FINISH"/>
       <set_order_syncpoint_reached order="this.ship.order"/>

@@ -5,6 +5,8 @@
   <order id ="JP_CanCarryWare" name="true if ship can carry given ware" category="internal" infinite="false">
     <params>
       <param name="SHIP" type="internal" default="NULL"/>
+      <param name="COLLECT_CARGO" type="internal" default="true"/>
+      <param name="COLLECT_INVENTORY" type="internal" default="true"/>
       <param name="CONTAINER" type="internal" default="NULL"/>
       <param name="DEBUG" type="internal" default="false"/>
     </params>
@@ -22,7 +24,7 @@
 
       <do_all exact="$CONTAINER.wares.count" counter="$_it">
         <set_value name="$Ware" exact="$CONTAINER.wares.list.{$_it}"/>
-        <do_if value="$Ware.isinventory or not $Ware.isinventory and $SHIP.cargo.{$Ware}.free">
+        <do_if value="$Ware.isinventory and $COLLECT_INVENTORY or not $Ware.isinventory and $SHIP.cargo.{$Ware}.free and $COLLECT_CARGO">
           <set_value name="$CanCarry" exact="true"/>
         </do_if>
         <do_else>
