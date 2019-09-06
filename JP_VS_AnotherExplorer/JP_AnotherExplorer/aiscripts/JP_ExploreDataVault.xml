@@ -50,9 +50,11 @@
         <!-- No navbeacon there an no navbeacons in cargo bay -->
         <do_elseif value="$NavBeacon == null and $SHIP.ammostorage.{deployablecategory.navbeacon}.count == 0">
           <do_if value="$RESUPPLY_NAVBEACON">
-          <!-- Resupply Navbeacons and retry to place one -->
-            <debug_text text="'Resuppling navbeacons...'"/>
-            <add_supply_order object="$SHIP" ware="ware.scanningarrays" exact="2"/>
+            <!-- Resupply Navbeacons and retry to place one -->
+            <!-- Actual i don't know how to do that... -->
+            <!-- Player needs to resupply navbeacons on his own... -->
+            <!-- Or use the cheaty way -->
+            <!--<add_ammo object="$SHIP" macro="macro.env_deco_nav_beacon_t1_macro" amount="1"/>-->
           </do_if>
         </do_elseif>
         <!-- A navbeacon is already placed -->
