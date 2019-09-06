@@ -37,14 +37,12 @@
       <label name="START"/>
       <cancel_all_orders object="this.ship"/>
 
-      <!-- Find DataVaults -->
-      <find_object name="$RESULT" space="player.galaxy" multiple="true">
-        <match macro="[macro.landmarks_vault_01_macro, macro.landmarks_vault_02_macro, macro.landmarks_vault_03_macro, macro.landmarks_vault_04_macro, macro.landmarks_vault_05_macro]"/>
-      </find_object>
-
-      <do_all exact="$RESULT.count" counter="$_it">
-        <debug_text text="'%1'.[$RESULT.{$_it}.knownname]"/>
-      </do_all>
+      <run_script name="'JP_ExploreDataVault'">
+        <param name="SHIP" value="this.ship"/>
+        <param name="SECTOR" value="$OBJECT"/>
+        <param name="RESUPPLY_NAVBEACON" value="true"/>
+        <param name="DEBUG" value="true"/>
+      </run_script>
 
       <label name="FINISH"/>
       <set_order_syncpoint_reached order="this.ship.order"/>

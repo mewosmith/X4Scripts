@@ -48,6 +48,13 @@
       <set_value name="$RUNNING" exact="true"/>
       <set_value name="$SHIP" exact="this.ship"/>
 
+      <do_if value="$SHIP.sector != $SECTOR">
+        <run_script name="'move.generic'">
+          <param name="destination" value="$SECTOR" />
+          <param name="endintargetzone" value="true"/>
+        </run_script>
+      </do_if>
+
       <label name="$RESUME"/>
 
       <create_list name="$DroppedCargo"/>

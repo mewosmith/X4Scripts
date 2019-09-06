@@ -26,5 +26,7 @@
     <Xml Include="JP_AnotherExplorer\aiscripts\JP_FindAllStationsInSector.xml" />
     <Xml Include="JP_AnotherExplorer\aiscripts\JP_HasUnknownObjects.xml" />
     <Xml Include="JP_AnotherExplorer\content.xml" />
+    <Xml Include="JP_AnotherExplorer\aiscripts\JP_IsDataVaultHere.xml" />
+    <Xml Include="JP_AnotherExplorer\aiscripts\JP_ExploreDataVault.xml" />
   </ItemGroup>
 </Project>

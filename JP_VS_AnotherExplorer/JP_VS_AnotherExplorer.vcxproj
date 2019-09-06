@@ -127,10 +127,12 @@
   </ItemGroup>
   <ItemGroup>
     <Xml Include="JP_AnotherExplorer\aiscripts\JP_AnotherExplorer.xml" />
+    <Xml Include="JP_AnotherExplorer\aiscripts\JP_ExploreDataVault.xml" />
     <Xml Include="JP_AnotherExplorer\aiscripts\JP_ExploreSector.xml" />
     <Xml Include="JP_AnotherExplorer\aiscripts\JP_FindAllGatesInSector.xml" />
     <Xml Include="JP_AnotherExplorer\aiscripts\JP_FindAllStationsInSector.xml" />
     <Xml Include="JP_AnotherExplorer\aiscripts\JP_HasUnknownObjects.xml" />
+    <Xml Include="JP_AnotherExplorer\aiscripts\JP_IsDataVaultHere.xml" />
     <Xml Include="JP_AnotherExplorer\content.xml" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

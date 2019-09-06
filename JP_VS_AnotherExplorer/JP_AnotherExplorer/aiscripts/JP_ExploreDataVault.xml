@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<aiscript name="JP_ExploreDataVault" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="aiscripts.xsd">
+
+  <order id ="JP_ExploreDataVault" name="JP ExploreDataVault" description="searches for a data vault and sets a nav beacon next to it" category="internal" infinite="false">
+    <params>
+      <param name="SHIP" type="internal" default="NULL"/>
+      <param name="SECTOR" type="internal" default="NULL"/>
+      <param name="RESUPPLY_NAVBEACON" type="internal" default="true"/>
+      <param name="DEBUG" type="internal" default="false"/>
+    </params>
+  </order>
+
+  <init>
+  </init>
+
+  <attention min="unknown">
+    <actions>
+
+      <wait exact="1ms"/>
+      <label name="START"/>
+
+      <!-- Get Data Vault object if none is here retval is null -->
+      <run_script name="'JP_IsDataVaultHere'">
+        <param name="SECTOR" value="$SECTOR"/>
+        <param name="DEBUG" value="$DEBUG"/>
+        <save_retval name="DATA_VAULT" variable="$DataVault" />
+      </run_script>
+
+      <do_if value="$DataVault != null">
+
+        <!-- Is a navbeacon besides the DataVault? -->
+        <find_object name="$NavBeacon" space="$DataVault.zone">
+          <match class="class.navbeacon"/>
+        </find_object>
+
+        <!-- If no navbeacon is there -->
+        <do_if value="$NavBeacon == null and $SHIP.ammostorage.{deployablecategory.navbeacon}.count gt 0">
+          <!-- Move to the DataVault -->
+          <debug_text text="'Move to %1...  ~~  [%2]'.[$DataVault.name, $DataVault]"/>
+          <run_script name="'move.generic'">
+            <param name="destination" value="$DataVault" />
+            <param name="endintargetzone" value="false"/>
+          </run_script>
+          <!-- Deploy a Navbeacon -->
+          <debug_text text="'Deploying Navbeacon...'"/>
+          <launch_navbeacon object="$SHIP" category="deployablecategory.navbeacon" name="$NavBeacon"/>
+          <set_object_name object="$NavBeacon" name="'DataVault  ~~  [%1]'.[$NavBeacon.sector.knownname]"/>
+        </do_if>
+        <!-- No navbeacon there an no navbeacons in cargo bay -->
+        <do_elseif value="$NavBeacon == null and $SHIP.ammostorage.{deployablecategory.navbeacon}.count == 0">
+          <do_if value="$RESUPPLY_NAVBEACON">
+          <!-- Resupply Navbeacons and retry to place one -->
+            <debug_text text="'Resuppling navbeacons...'"/>
+            <add_supply_order object="$SHIP" ware="ware.scanningarrays" exact="2"/>
+          </do_if>
+        </do_elseif>
+        <!-- A navbeacon is already placed -->
+        <do_elseif value="$NavBeacon != null">
+          <do_if value="$DEBUG">
+            <debug_text text="'There is already a Navbeacon besides the data vault'"/>
+          </do_if>
+        </do_elseif>
+
+      </do_if>
+      <do_else>
+        <debug_text text="'No DataVault in %1'.[$SECTOR]"/>
+      </do_else>
+
+      <label name="CLEANUP"/>
+      <remove_value name="$NavBeacon"/>
+      <remove_value name="$DataVault"/>
+
+      <label name="FINISH"/>
+      <set_order_syncpoint_reached order="$SHIP.order"/>
+      <cancel_order order="$SHIP.order" />
+      <wait exact="1ms"/>
+
+    </actions>
+  </attention>
+
+</aiscript>
