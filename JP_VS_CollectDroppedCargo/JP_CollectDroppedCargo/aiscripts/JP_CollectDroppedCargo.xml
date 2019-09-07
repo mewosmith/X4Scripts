@@ -7,6 +7,10 @@
       <param name="SECTOR" type="object" default="this.sector" text="{20001, 201}">
         <input_param name="class" value="[class.sector]"/>
       </param>
+      <param name="HOME_STATION" type="object" default="this.ship" text="Home Station/Ship">
+        <input_param name="class" value="[class.station, class.ship]"/>
+      </param>
+      <param name="EMPTYING_CARGO_AT_HOME_STATION" type="bool" default="false" text="Empty cargo at home station?"/>
       <param name="COLLECT_CARGO" type="bool" default="true" text="Collect Cargo items?"/>
       <param name="COLLECT_INVENTORY" type="bool" default="true" text="Collect Inventory items?"/>
       <param name="INSTANT" type="bool" default="false" text="Instant?"/>
@@ -54,6 +58,27 @@
       </do_if>
 
       <label name="$RESUME"/>
+
+      <do_if value="$EMPTYING_CARGO_AT_HOME_STATION and $HOME_STATION.isplayerowned">
+        <!-- Check is cargobay full ? -->
+        <do_if value="$Ship.cargo.free.container lt ($Ship.cargo.capacity.container * 0.1)">
+          <do_all exact="$Ship.cargo.count" counter="$_it">
+            <set_value name="$Ware" exact="$Ship.cargo.list.{$_it}"/>
+            <set_value name="$WareAmount" exact="$Ship.cargo.{$Ship.cargo.list.{$_it}}.count"/>
+            <debug_text text="'%1  ~~  %2'.[$Ware, $WareAmount]"/>
+            <create_trade_offer seller="$Ship" object="$HOME_STATION" playeronly="true" price="0Cr" ware="$Ware" amount="$WareAmount" name="$BuyOffer"/>
+            <remove_value name="$WareAmount"/>
+            <remove_value name="$Ware"/>
+          </do_all>
+          <find_sell_offer buyer="$HOME_STATION" seller="$Ship" wares="$Ship.wares.list" result="$BuyOffer"/>
+          <debug_text text="$BuyOffer"/>
+          <do_if value="$BuyOffer">
+            <run_script name="'order.trade.perform'">
+              <param name="tradedeal" value="$BuyOffer"/>
+            </run_script>
+          </do_if>
+        </do_if>
+      </do_if>
 
       <create_list name="$DroppedCargo"/>
       <create_list name="$DroppedCargoSorted"/>
