@@ -23,5 +23,6 @@
     <Xml Include="JP_CollectDroppedCargo\aiscripts\JP_CollectDroppedCargo.xml" />
     <Xml Include="JP_CollectDroppedCargo\content.xml" />
     <Xml Include="JP_CollectDroppedCargo\aiscripts\JP_CanCarryWare.xml" />
+    <Xml Include="JP_CollectDroppedCargo\aiscripts\JP_EmptyCargo.xml" />
   </ItemGroup>
 </Project>

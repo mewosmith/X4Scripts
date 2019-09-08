@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<aiscript name="JP_EmptyCargo" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="aiscripts.xsd">
+
+  <order id ="JP_EmptyCargo" name="JP EmptyCargo" description="empties cargo bay" category="internal" infinite="false">
+    <params>
+      <param name="SHIP" type="internal" default="null"/>
+      <param name="HOME" type="internal" default="null"/>
+      <param name="DEBUG" type="internal" default="false"/>
+    </params>
+  </order>
+
+  <interrupts>
+  </interrupts>
+
+  <init>
+  </init>
+
+  <attention min="unknown">
+    <actions>
+
+      <wait exact="1ms"/>
+      <label name="START"/>
+
+      <label name="RESUME"/>
+
+      <do_if value="$SHIP.cargo.count gt 0">
+        <set_value name="$Ware" exact="$SHIP.cargo.list.last"/>
+        <set_value name="$WareAmount" exact="$SHIP.cargo.{$SHIP.cargo.list.last}.count"/>
+
+        <debug_text text="'Create TradeOffer with %1  ~~  %2'.[$Ware, $WareAmount]"/>
+        <debug_text text="'Before Trade functions'"/>
+        <create_trade_offer buyer="$HOME" object="$HOME" playeronly="true" price="0Cr" ware="$Ware" amount="$WareAmount" name="$TradeOffer"/>
+        <wait exact="1s"/>
+
+        <create_trade_order object="$SHIP" tradeoffer="$TradeOffer" amount="$WareAmount"/>
+        <!--<create_order id="'TradePerform'" object="$SHIP">
+          <param name="tradedeal" value="$TradeOffer"/>
+        </create_order>-->
+
+        <wait exact="1s"/>
+        <remove_trade_offer object="$HOME" tradeoffer="$TradeOffer"/>
+        <wait exact="1s"/>
+        <debug_text text="'After Trade functions'"/>
+
+        <remove_value name="$TradeOffer"/>
+        <remove_value name="$WareAmount"/>
+        <remove_value name="$Ware"/>
+
+        <wait exact="1s"/>
+        <resume label="RESUME"/>
+      </do_if>
+
+      <!--<do_if value="$EMPTYING_CARGO_AT_HOME_STATION and $HOME_STATION.isplayerowned">
+        -->
+      <!-- Check is cargobay full ? -->
+      <!--
+        <do_if value="$Ship.cargo.free.container lt ($Ship.cargo.capacity.container * 0.1)">
+          <create_list name="$TradeOfferList"/>
+          <create_list name="$TradeOfferAmountList"/>
+          <do_all exact="$Ship.cargo.count" counter="$_it">
+            <set_value name="$Ware" exact="$Ship.cargo.list.{$_it}"/>
+            <set_value name="$WareAmount" exact="$Ship.cargo.{$Ship.cargo.list.{$_it}}.count"/>
+            <debug_text text="'Create TradeOffer with %1  ~~  %2'.[$Ware, $WareAmount]"/>
+            <create_trade_offer buyer="$HOME_STATION" object="$HOME_STATION" playeronly="true" price="0Cr" ware="$Ware" amount="$WareAmount" name="$TradeOffer"/>
+            <wait exact="1s"/>
+            <debug_text text="'TradeOffer: %1'.[$TradeOffer]"/>
+            <append_to_list name="$TradeOfferList" exact="$TradeOffer"/>
+            <append_to_list name="$TradeOfferAmountList" exact="$WareAmount"/>
+            <remove_value name="$WareAmount"/>
+            <remove_value name="$Ware"/>
+          </do_all>
+          <wait exact="1s"/>
+          <do_all exact="$TradeOfferList.count" counter="$_it">
+            <debug_text text="'TEST'"/>
+            <create_trade_order object="$Ship" tradeoffer="$TradeOfferList.{$_it}" amount="$TradeOfferAmountList.{$_it}"/>
+          </do_all>
+          <remove_value name="$TradeOfferAmountList"/>
+          <remove_value name="$TradeOfferList"/>
+        </do_if>
+      </do_if>-->
+
+      <label name="FINISH"/>
+      <wait exact="1ms"/>
+
+    </actions>
+  </attention>
+
+</aiscript>

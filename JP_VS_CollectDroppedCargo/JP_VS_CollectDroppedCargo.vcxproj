@@ -128,6 +128,7 @@
   <ItemGroup>
     <Xml Include="JP_CollectDroppedCargo\aiscripts\JP_CanCarryWare.xml" />
     <Xml Include="JP_CollectDroppedCargo\aiscripts\JP_CollectDroppedCargo.xml" />
+    <Xml Include="JP_CollectDroppedCargo\aiscripts\JP_EmptyCargo.xml" />
     <Xml Include="JP_CollectDroppedCargo\content.xml" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
