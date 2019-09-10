@@ -5,10 +5,12 @@
   <order id ="JP_ExploreSector" name="Explores an Sector" category="internal" infinite="false">
     <params>
       <param name="SHIP" type="object" text="ShipObject"/>
-      <param name="FIND_GATES" type="bool" text="FindGates"/>
-      <param name="FIND_STATIONS" type="bool" text="FindStations"/>
-      <param name="SECTOR_TO_EXPLORE" type="object" text="SectorToExplore"/>
+      <param name="SECTOR" type="object" text="Sector"/>
+      <param name="EXPLORE_GATES" type="bool" text="ExploreGates"/>
+      <param name="EXPLORE_STATIONS" type="bool" text="ExploreStations"/>
+      <param name="EXPLORE_DATAVAULT" type="bool" text="ExploreStations"/>
       <param name="EXPLORE_ENEMY_STATIONS" type="bool" text="Explore Enemy Stations?"/>
+      <param name="RESUPPLY_NAVBEACON" type="internal" default="true"/>
       <param name="DEBUG" type="bool" text="DebugText"/>
     </params>
   </order>
@@ -33,84 +35,110 @@
     <actions>
 
       <do_if value="$DEBUG">
-        <debug_text text="'Exploring Sector %1'.[$SECTOR_TO_EXPLORE.name]"/>
+        <debug_text text="'Exploring Sector %1 [%2]'.[$SECTOR.knownname, $SECTOR.owner.knownname]"/>
       </do_if>
 
-      <!-- Find Gates ~~~~~~~~~~~~~~~~~~~~~  -->
-
-      <do_if value="$FIND_GATES">
-        <create_list name="$Gates"/>
-        <run_script name="'JP_FindAllGatesInSector'">
-          <param name="SHIP" value="$SHIP"/>
-          <param name="SECTOR_TO_EXPLORE" value="$SECTOR_TO_EXPLORE"/>
-          <param name="DEBUG" value="$DEBUG"/>
-          <save_retval name="GATES" variable="$Gates" />
-        </run_script>
-        <do_if value="$Gates.count gt 0">
-          <do_if value="$DEBUG">
-            <debug_text text="'Gates to explore: %1'.[$Gates.count]"/>
-          </do_if>
-          <do_all exact="$Gates.count" counter="$_jt">
-            <do_if value="$DEBUG">
-              <debug_text text="'Exploring Gate: %1'.[$Gates.{$_jt}.knownname]"/>
-            </do_if>
-            <check_object object="$Gates.{$_jt}" knownto="$SHIP.owner" result="$isKnown"/>
-            <do_if value="$isKnown" negate="true">
-              <set_command command="command.movetozone" param="$Gates.{$_jt}"/>
-              <set_command_action commandaction ="commandaction.flyingto" param="$Gates.{$_jt}"/>
-              <run_script name="'move.generic'">
-                <param name="destination" value="$Gates.{$_jt}" />
-                <param name="endintargetzone" value="true"/>
-              </run_script>
-            </do_if>
-          </do_all>
+      <!-- Explore Gates ~~~~~~~~~~~~~~~~~~~~~  -->
+      <do_if value="$EXPLORE_GATES">
+        <!-- Unknown Gates -->
+        <debug_text text="'Search for unknown Gates...'"/>
+        <find_gate name="$Gates" space="$SECTOR" multiple="true">
+          <match knownto="$SHIP.owner" negate="true"/>
+        </find_gate>
+        <do_if value="$DEBUG">
+          <debug_text text="'%1 unknown gates found'.[$Gates.count]"/>
         </do_if>
+        <do_while value="$Gates.count gt 0">
+          <!-- Sort Gates list to the ship distance -->
+          <run_script name="'JP_SortListByDistance'">
+            <param name="LIST" value="$Gates"/>
+            <param name="OBJECT" value="$SHIP"/>
+            <param name="DEBUG" value="$DEBUG"/>
+            <save_retval name="SORTED_LIST" variable="$SortedList"/>
+          </run_script>
+          <set_value name="$Gates" exact="$SortedList"/>
+          <remove_value name="$SortedList"/>
+          <!-- Explore logic -->
+          <check_object object="$Gates.last" knownto="$SHIP.owner" result="$isKnown"/>
+          <do_if value="not $isKnown">
+            <set_command command="command.movetozone" param="$Gates.last"/>
+            <set_command_action commandaction ="commandaction.flyingto" param="$Gates.last"/>
+            <run_script name="'move.generic'">
+              <param name="destination" value="$Gates.last" />
+              <param name="endintargetzone" value="true"/>
+            </run_script>
+          </do_if>
+          <remove_value name="$isKnown"/>
+          <remove_from_list name="$Gates" exact="$Gates.last"/>
+        </do_while>
         <remove_value name="$Gates"/>
       </do_if>
 
-      <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
-      <!-- Find Stations ~~~~~~~~~~~~~~~~~~~~~  -->
-
-      <do_if value="$FIND_STATIONS">
-        <create_list name="$Stations"/>
-        <run_script name="'JP_FindAllStationsInSector'">
-          <param name="SHIP" value="$SHIP"/>
-          <param name="SECTOR_TO_EXPLORE" value="$SECTOR_TO_EXPLORE"/>
-          <param name="DEBUG" value="$DEBUG"/>
-          <save_retval name="STATIONS" variable="$Stations" />
-        </run_script>
-        <do_if value="$Stations.count gt 0">
-          <do_if value="$EXPLORE_ENEMY_STATIONS" negate="true">
-            <create_list name="$StationsToRemove"/>
-            <do_all exact="$Stations.count" counter="$_xt">
-              <do_if value="$Stations.{$_xt}.owner.mayattack.{$SHIP.owner}">
-                <append_to_list name="$StationsToRemove" exact="$Stations.{$_xt}"/>
-              </do_if>
-            </do_all>
-            <remove_from_list name="$Stations" list="$StationsToRemove"/>
-            <remove_value name="$StationsToRemove"/>
-          </do_if>
-          <do_if value="$DEBUG">
-            <show_help custom="'Stations to explore: %1'.[$Stations.count]" duration="1s" log="true"/>
-            <debug_text text="'Stations to explore: %1'.[$Stations.count]"/>
-          </do_if>
-          <do_all exact="$Stations.count" counter="$_jt">
-            <do_if value="$DEBUG">
-              <show_help custom="'Exploring Station: %1'.[$Stations.{$_jt}.knownname]" duration="1s" log="true"/>
-              <debug_text text="'Exploring Station: %1'.[$Stations.{$_jt}.knownname]"/>
-            </do_if>
-            <check_object object="$Stations.{$_jt}" knownto="faction.player" result="$isKnown"/>
-            <do_if value="$isKnown" negate="true">
-              <set_command command="command.movetozone" param="$Stations.{$_jt}"/>
-              <set_command_action commandaction ="commandaction.flyingto" param="$Stations.{$_jt}"/>
-              <run_script name="'move.generic'">
-                <param name="destination" value="$Stations.{$_jt}" />
-                <param name="endintargetzone" value="true"/>
-              </run_script>
-            </do_if>
-          </do_all>
+      <!-- Explore Stations ~~~~~~~~~~~~~~~~~~~~~  -->
+      <do_if value="$EXPLORE_STATIONS">
+        <!-- Unknown Stations -->
+        <do_if value="$DEBUG">
+          <debug_text text="'Search for unknown Stations...'"/>
         </do_if>
+        <do_if value="$EXPLORE_ENEMY_STATIONS">
+          <find_station name="$Stations" space="$SECTOR" multiple="true">
+            <match knownto="$SHIP.owner" negate="true"/>
+          </find_station>
+        </do_if>
+        <do_else>
+          <find_station name="$Stations" space="$SECTOR" multiple="true">
+            <match knownto="$SHIP.owner" negate="true"/>
+            <match mayattack="$SHIP" negate="true"/>
+          </find_station>
+        </do_else>
+        <do_if value="$DEBUG">
+          <debug_text text="'%1 unknown stations found'.[$Stations.count]"/>
+        </do_if>
+        <do_while value="$Stations.count gt 0">
+          <!-- Sort Stations list to the ship distance -->
+          <run_script name="'JP_SortListByDistance'">
+            <param name="LIST" value="$Stations"/>
+            <param name="OBJECT" value="$SHIP"/>
+            <param name="DEBUG" value="$DEBUG"/>
+            <save_retval name="SORTED_LIST" variable="$SortedList"/>
+          </run_script>
+          <set_value name="$Stations" exact="$SortedList"/>
+          <remove_value name="$SortedList"/>
+          <!-- Explore logic -->
+          <check_object object="$Stations.last" knownto="$SHIP.owner" result="$isKnown"/>
+          <do_if value="not $isKnown">
+            <set_command command="command.movetozone" param="$Stations.last"/>
+            <set_command_action commandaction ="commandaction.flyingto" param="$Stations.last"/>
+            <run_script name="'move.generic'">
+              <param name="destination" value="$Stations.last" />
+              <param name="endintargetzone" value="true"/>
+            </run_script>
+          </do_if>
+          <remove_value name="$isKnown"/>
+          <remove_from_list name="$Stations" exact="$Stations.last"/>
+        </do_while>
         <remove_value name="$Stations"/>
+      </do_if>
+
+      <!-- Explore DataVault -->
+      <do_if value="$EXPLORE_DATAVAULT">
+        <do_if value="$DEBUG">
+          <debug_text text="'Search for an unknown DataVault...'"/>
+        </do_if>
+        <run_script name="'JP_IsDataVaultHere'">
+          <param name="SECTOR" value="$SECTOR"/>
+          <param name="DEBUG" value="$DEBUG"/>
+          <save_retval name="DATA_VAULT" variable="$DataVault"/>
+        </run_script>
+        <do_if value="$DataVault != null">
+          <run_script name="'JP_ExploreDataVault'">
+            <param name="SHIP" value="$SHIP"/>
+            <param name="SECTOR" value="$SECTOR"/>
+            <!-- TODO: Make RESUPPLY_NAVBEACON toggleable -->
+            <param name="RESUPPLY_NAVBEACON" value="$RESUPPLY_NAVBEACON"/>
+            <param name="DEBUG" value="true"/>
+          </run_script>
+        </do_if>
       </do_if>
 
       <wait exact="1ms"/>

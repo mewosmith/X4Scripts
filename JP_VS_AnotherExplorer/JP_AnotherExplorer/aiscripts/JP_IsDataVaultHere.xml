@@ -4,7 +4,7 @@
 
   <order id ="JP_IsDataVaultHere" name="JP IsDataVaultHere" description="the DataVault object if true else null" category="internal" infinite="false">
     <params>
-      <param name="SECTOR" type="internal" default="NULL"/>
+      <param name="SECTOR" type="internal" default="null"/>
       <param name="DEBUG" type="internal" default="false"/>
     </params>
   </order>

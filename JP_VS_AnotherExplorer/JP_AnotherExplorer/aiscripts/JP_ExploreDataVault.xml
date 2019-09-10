@@ -4,8 +4,8 @@
 
   <order id ="JP_ExploreDataVault" name="JP ExploreDataVault" description="searches for a data vault and sets a nav beacon next to it" category="internal" infinite="false">
     <params>
-      <param name="SHIP" type="internal" default="NULL"/>
-      <param name="SECTOR" type="internal" default="NULL"/>
+      <param name="SHIP" type="internal" default="null"/>
+      <param name="SECTOR" type="internal" default="null"/>
       <param name="RESUPPLY_NAVBEACON" type="internal" default="true"/>
       <param name="DEBUG" type="internal" default="false"/>
     </params>
@@ -27,6 +27,7 @@
         <save_retval name="DATA_VAULT" variable="$DataVault" />
       </run_script>
 
+      <!-- Is a DataVault here? -->
       <do_if value="$DataVault != null">
 
         <!-- Is a navbeacon besides the DataVault? -->
@@ -34,48 +35,80 @@
           <match class="class.navbeacon"/>
         </find_object>
 
-        <!-- If no navbeacon is there -->
-        <do_if value="$NavBeacon == null and $SHIP.ammostorage.{deployablecategory.navbeacon}.count gt 0">
-          <!-- Move to the DataVault -->
-          <debug_text text="'Move to %1...  ~~  [%2]'.[$DataVault.name, $DataVault]"/>
-          <run_script name="'move.generic'">
-            <param name="destination" value="$DataVault" />
-            <param name="endintargetzone" value="false"/>
-          </run_script>
-          <!-- Deploy a Navbeacon -->
-          <debug_text text="'Deploying Navbeacon...'"/>
-          <launch_navbeacon object="$SHIP" category="deployablecategory.navbeacon" name="$NavBeacon"/>
-          <set_object_name object="$NavBeacon" name="'DataVault  ~~  [%1]'.[$NavBeacon.sector.knownname]"/>
-        </do_if>
-        <!-- No navbeacon there an no navbeacons in cargo bay -->
-        <do_elseif value="$NavBeacon == null and $SHIP.ammostorage.{deployablecategory.navbeacon}.count == 0">
-          <do_if value="$RESUPPLY_NAVBEACON">
-            <!-- Resupply Navbeacons and retry to place one -->
-            <!-- Actual i don't know how to do that... -->
-            <!-- Player needs to resupply navbeacons on his own... -->
-            <!-- Or use the cheaty way -->
-            <!--<add_ammo object="$SHIP" macro="macro.env_deco_nav_beacon_t1_macro" amount="1"/>-->
+        <do_if value="$NavBeacon == null">
+
+          <!-- Resupplying Navbeacons? -->
+          <do_if value="$RESUPPLY_NAVBEACON and $SHIP.ammostorage.{deployablecategory.navbeacon}.count lt 1">
+            <do_if value="$DEBUG">
+              <debug_text text="'Start resupplying of nav beacons...'"/>
+            </do_if>
+            <set_value name="$AmmoTable" exact="table[]"/>
+            <set_value name="$AmmoTable.{ware.waypointmarker_01}" exact="2"/>
+            <find_station space="player.galaxy" checkoperational="true" cansupplyclass="$SHIP.class" name="$Stations" multiple="true">
+              <match mayattack="$SHIP" negate="true"/>
+            </find_station>
+            <do_if value="$DEBUG">
+              <debug_text text="'Found stations where we could resupply nav beacons...'"/>
+            </do_if>
+            <run_script name="'JP_SortListByDistance'">
+              <param name="LIST" value="$Stations" />
+              <param name="OBJECT" value="$SHIP"/>
+              <param name="DEBUG" value="$DEBUG"/>
+              <save_retval name="SORTED_LIST" variable="$SortedList"/>
+            </run_script>
+            <set_value name="$Stations" exact="$SortedList"/>
+            <remove_value name="$SortedList"/>
+            <set_value name="$Price" exact="0Cr"/>
+            <set_value name="$Price" operation="add" exact="$Stations.last.buildprice.{ware.waypointmarker_01} * 2"/>
+            <do_if value="$DEBUG">
+              <debug_text text="'Station to resupply: %1 [%2]'.[$Stations.last.knownname, $Stations.last.idcode]"/>
+              <debug_text text="'%1Cr for 2x %2'.[$Price, ware.waypointmarker_01]"/>
+            </do_if>
+            <!-- Price doesn't work? -->
+            <add_build_to_modify_ship buildobject="$SHIP" object="$Stations.last" ammo="$AmmoTable" price="$Price" immediate="true" internal="true"/>
+            <wait exact="1s"/>
+            <remove_value name="$Price"/>
+            <remove_value name="$AmmoTable"/>
+            <remove_value name="$Stations"/>
           </do_if>
-        </do_elseif>
-        <!-- A navbeacon is already placed -->
-        <do_elseif value="$NavBeacon != null">
+
+          <!-- If no navbeacon is there -->
+          <do_if value="$SHIP.ammostorage.{deployablecategory.navbeacon}.count gt 0">
+            <!-- Move to DataVault -->
+            <do_if value="$DEBUG">
+              <debug_text text="'Move to %1...  ~~  [%2]'.[$DataVault.name, $DataVault]"/>
+            </do_if>
+            <run_script name="'move.generic'">
+              <param name="destination" value="$DataVault" />
+              <param name="endintargetzone" value="false"/>
+            </run_script>
+            <!-- Deploy a Navbeacon -->
+            <do_if value="$DEBUG">
+              <debug_text text="'Deploying Navbeacon...'"/>
+            </do_if>
+            <launch_navbeacon object="$SHIP" category="deployablecategory.navbeacon" name="$NavBeacon"/>
+            <set_object_name object="$NavBeacon" name="'%1  ~~  [%2]'.[{20109,8901}, $NavBeacon.sector.knownname]"/>
+          </do_if>
+
+        </do_if>
+        <do_else>
           <do_if value="$DEBUG">
             <debug_text text="'There is already a Navbeacon besides the data vault'"/>
           </do_if>
-        </do_elseif>
+        </do_else>
 
+        <remove_value name="$NavBeacon"/>
       </do_if>
       <do_else>
-        <debug_text text="'No DataVault in %1'.[$SECTOR]"/>
+        <do_if value="$DEBUG">
+          <debug_text text="'No DataVault in %1'.[$SECTOR]"/>
+        </do_if>
       </do_else>
 
       <label name="CLEANUP"/>
-      <remove_value name="$NavBeacon"/>
       <remove_value name="$DataVault"/>
 
       <label name="FINISH"/>
-      <set_order_syncpoint_reached order="$SHIP.order"/>
-      <cancel_order order="$SHIP.order" />
       <wait exact="1ms"/>
 
     </actions>

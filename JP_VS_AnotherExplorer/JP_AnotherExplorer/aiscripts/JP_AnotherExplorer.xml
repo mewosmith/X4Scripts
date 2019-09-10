@@ -10,11 +10,13 @@
       <param name="HOME_SECTOR" type="object" default="this.sector" text="Home Position or Station">
         <input_param name="class" value="[class.sector, class.station]"/>
       </param>
-      <param name="FIND_GATES" required="false" type="bool" default="true" text="Discover Gates?"/>
-      <param name="FIND_STATIONS" required="false" type="bool" default="true" text="Discover Stations?"/>
+      <param name="EXPLORE_GATES" required="false" type="bool" default="true" text="Discover Gates?"/>
+      <param name="EXPLORE_STATIONS" required="false" type="bool" default="true" text="Discover Stations?"/>
+      <param name="EXPLORE_DATAVAULT" required="false" type="bool" default="true" text="Discover DataVaults?"/>
       <param name="ENTIRE_GALAXY" required="false" type="bool" default="false" text="Explore Galaxy?"/>
       <param name="EXPLORE_ENEMY_SECTORS" required="false" type="bool" default="false" text="Explore Enemy Sectors?"/>
       <param name="EXPLORE_ENEMY_STATIONS" required="false" type="bool" default="false" text="Explore Enemy Stations?"/>
+      <param name="RESUPPLY_NAVBEACON" required="false" type="bool" default="true" text="Resupply NavBeacon?"/>
       <param name="RETURN_HOME" required="false" type="bool" default="true" text="Return Home?"/>
       <param name="DEBUG" required="false" type="bool" default="false" text="Debug text" advanced="true"/>
     </params>
@@ -45,105 +47,97 @@
 
       <wait exact="1ms"/>
       <label name="START"/>
-      <set_value name="$RUNNING" exact="true"/>
-      <set_value name="$SHIP" exact="this.ship"/>
+      <set_value name="$Running" exact="true"/>
+      <set_value name="$Ship" exact="this.ship"/>
 
       <label name="RESUME"/>
 
       <do_if value="$ENTIRE_GALAXY">
 
         <!-- Find Sectors -->
-        <create_list name="$SECTORS"/>
-        <find_sector name="$SECTORS" space="player.galaxy" multiple="true"/>
-        <!-- Exlude Enemy Sectors ?-->
-        <do_if value="$EXPLORE_ENEMY_SECTORS == false">
-          <create_list name="$SECTORS_TO_REMOVE"/>
-          <do_all exact="$SECTORS.count" counter="$_it">
-            <do_if value="$SECTORS.{$_it}.owner.mayattack.{$SHIP}">
-              <append_to_list name="$SECTORS_TO_REMOVE" exact="$SECTORS.{$_it}"/>
-            </do_if>
+        <create_list name="$Sectors"/>
+        <do_if value="$EXPLORE_ENEMY_SECTORS">
+          <find_sector name="$Sectors" space="player.galaxy" multiple="true"/>
+        </do_if>
+        <do_else>
+          <find_sector name="$Sectors" space="player.galaxy" multiple="true">
+            <match mayattack="$Ship" negate="true"/>
+          </find_sector>
+        </do_else>
+        <do_if value="$DEBUG">
+          <debug_text text="'Found Sectors'"/>
+          <do_all exact="$Sectors.count" counter="$_it">
+            <debug_text text="'%1 [%2]'.[$Sectors.{$_it}.knownname, $Sectors.{$_it}.owner.knownname]"/>
           </do_all>
-          <remove_from_list name="$SECTORS" list="$SECTORS_TO_REMOVE"/>
-          <remove_value name="$SECTORS_TO_REMOVE"/>
+          <debug_text text="'  ~~~~~~~~~~~~~~~~~  '"/>
         </do_if>
 
         <!-- Remove all sectors where all objects are discoverd -->
-        <create_list name="$SECTORS_TO_REMOVE"/>
-        <do_all exact="$SECTORS.count" counter="$_it">
+        <create_list name="$SectorsToRemove"/>
+        <do_all exact="$Sectors.count" counter="$_it">
           <run_script name="'JP_HasUnknownObjects'">
-            <param name="SHIP" value="$SHIP"/>
-            <param name="SECTOR" value="$SECTORS.{$_it}"/>
-            <param name="ENEMY_STATIONS" value="$EXPLORE_ENEMY_STATIONS"/>
-            <param name="DEBUG" value="$DEBUG"/>
-            <save_retval name="HAS_UNKNOWN_OBJECTS" variable="$HAS_UNKNOWN_OBJECTS" />
-          </run_script>
-          <do_if value="$HAS_UNKNOWN_OBJECTS == false">
-            <append_to_list name="$SECTORS_TO_REMOVE" exact="$SECTORS.{$_it}"/>
-          </do_if>
-        </do_all>
-        <remove_from_list name="$SECTORS" list="$SECTORS_TO_REMOVE"/>
-        <remove_value name="$SECTORS_TO_REMOVE"/>
-
-        <do_if value="$SECTORS.count gt 0">
-
-          <!-- Sort Sectors by Distance to the ship -->
-          <create_list name="$SORTED_SECTORS"/>
-          <do_while value="$SECTORS.count gt 0">
-            <set_value name="$INDEX" exact="0"/>
-            <set_value name="$BIGGEST_DISTANCE" exact="0"/>
-            <do_all exact="$SECTORS.count" counter="$_it">
-              <do_if value="$SHIP.distanceto.{$SECTORS.{$_it}} gt $BIGGEST_DISTANCE">
-                <set_value name="$BIGGEST_DISTANCE" exact="$SHIP.distanceto.{$SECTORS.{$_it}}"/>
-                <set_value name="$INDEX" exact="$_it"/>
-              </do_if>
-            </do_all>
-            <append_to_list name="$SORTED_SECTORS" exact="$SECTORS.{$INDEX}"/>
-            <remove_from_list name="$SECTORS" list="$SORTED_SECTORS"/>
-          </do_while>
-          <remove_value name="$SECTORS"/>
-
-          <do_if value="$DEBUG">
-            <do_all exact="$SORTED_SECTORS.count" counter="$_it" reverse="true">
-              <debug_text text="'%1  ~~  %2'.[$SHIP.distanceto.{$SORTED_SECTORS.{$_it}}, $SORTED_SECTORS.{$_it}.knownname]"/>
-            </do_all>
-          </do_if>
-
-          <!-- Explore nearest sector -->
-          <do_if value="$DEBUG">
-            <debug_text text="'Exploring sector %1'.[$SORTED_SECTORS.last.knownname]"/>
-          </do_if>
-          <run_script name="'JP_ExploreSector'">
-            <param name="SHIP" value="$SHIP"/>
-            <param name="FIND_GATES" value="$FIND_GATES"/>
-            <param name="FIND_STATIONS" value="$FIND_STATIONS"/>
-            <param name="SECTOR_TO_EXPLORE" value="$SORTED_SECTORS.last"/>
+            <param name="SHIP" value="$Ship"/>
+            <param name="SECTOR" value="$Sectors.{$_it}"/>
             <param name="EXPLORE_ENEMY_STATIONS" value="$EXPLORE_ENEMY_STATIONS"/>
             <param name="DEBUG" value="$DEBUG"/>
+            <save_retval name="HAS_UNKNOWN_OBJECTS" variable="$HasUnknownObjects" />
+          </run_script>
+          <do_if value="not $HasUnknownObjects">
+            <append_to_list name="$SectorsToRemove" exact="$Sectors.{$_it}"/>
+          </do_if>
+          <remove_value name="$HasUnknownObjects"/>
+        </do_all>
+        <remove_from_list name="$Sectors" list="$SectorsToRemove"/>
+        <remove_value name="$SectorsToRemove"/>
+        <do_if value="$DEBUG">
+          <debug_text text="'Sectors with unknown objects'"/>
+          <do_all exact="$Sectors.count" counter="$_it">
+            <debug_text text="'%1 [%2]'.[$Sectors.{$_it}.knownname, $Sectors.{$_it}.owner.knownname]"/>
+          </do_all>
+          <debug_text text="'  ~~~~~~~~~~~~~~~~~  '"/>
+        </do_if>
+
+        <do_if value="$Sectors.count gt 0">
+          <!-- Sort Sector list to the ship distance -->
+          <run_script name="'JP_SortListByDistance'">
+            <param name="LIST" value="$Sectors"/>
+            <param name="OBJECT" value="$Ship"/>
+            <param name="DEBUG" value="$DEBUG"/>
+            <save_retval name="SORTED_LIST" variable="$SortedList"/>
+          </run_script>
+          <set_value name="$Sectors" exact="$SortedList"/>
+          <remove_value name="$SortedList"/>
+
+          <!-- Explore nearest sector -->
+          <run_script name="'JP_ExploreSector'">
+            <param name="SHIP" value="$Ship"/>
+            <param name="SECTOR" value="$Sectors.last"/>
+            <param name="EXPLORE_GATES" value="$EXPLORE_GATES"/>
+            <param name="EXPLORE_STATIONS" value="$EXPLORE_STATIONS"/>
+            <param name="EXPLORE_DATAVAULT" value="$EXPLORE_DATAVAULT"/>
+            <param name="EXPLORE_ENEMY_STATIONS" value="$EXPLORE_ENEMY_STATIONS"/>
+            <param name="RESUPPLY_NAVBEACON" value="$RESUPPLY_NAVBEACON"/>
+            <param name="DEBUG" value="$DEBUG"/>
           </run_script>
 
-          <remove_value name="$SORTED_SECTORS"/>
-
-          <do_if value="$RUNNING">
-            <wait exact="10s"/>
-            <resume label="RESUME"/>
-          </do_if>
-
         </do_if>
-        <do_else>
-          <do_if value="$DEBUG">
-            <debug_text text="'No Objects to explore!'"/>
-          </do_if>
-          <show_help custom="'No Objects to explore!'" duration="6s"/>
-        </do_else>
+        <remove_value name="$Sectors"/>
+
+        <do_if value="$Running">
+          <wait exact="10s"/>
+          <resume label="RESUME"/>
+        </do_if>
 
       </do_if>
       <do_else>
         <run_script name="'JP_ExploreSector'">
-          <param name="SHIP" value="$SHIP"/>
-          <param name="FIND_GATES" value="$FIND_GATES"/>
-          <param name="FIND_STATIONS" value="$FIND_STATIONS"/>
-          <param name="SECTOR_TO_EXPLORE" value="$SECTOR"/>
+          <param name="SHIP" value="$Ship"/>
+          <param name="SECTOR" value="$SECTOR"/>
+          <param name="EXPLORE_GATES" value="$EXPLORE_GATES"/>
+          <param name="EXPLORE_STATIONS" value="$EXPLORE_STATIONS"/>
+          <param name="EXPLORE_DATAVAULT" value="$EXPLORE_DATAVAULT"/>
           <param name="EXPLORE_ENEMY_STATIONS" value="$EXPLORE_ENEMY_STATIONS"/>
+          <param name="RESUPPLY_NAVBEACON" value="$RESUPPLY_NAVBEACON"/>
           <param name="DEBUG" value="$DEBUG"/>
         </run_script>
       </do_else>
@@ -171,12 +165,12 @@
 
       <!-- All done ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
       <do_if value="$DEBUG">
-        <debug_text text="'Explorer %1 ~~ %2 is done with the work'.[$SHIP.name, $SHIP.idcode]"/>
+        <debug_text text="'Explorer %1 ~~ %2 is done with the work'.[$Ship.name, $Ship.idcode]"/>
       </do_if>
 
       <label name="FINISH"/>
-      <remove_value name="$SHIP"/>
-      <remove_value name="$RUNNING"/>
+      <remove_value name="$Ship"/>
+      <remove_value name="$Running"/>
       <set_order_syncpoint_reached order="this.ship.order"/>
       <cancel_order order="this.ship.order" />
       <wait exact="1ms"/>
