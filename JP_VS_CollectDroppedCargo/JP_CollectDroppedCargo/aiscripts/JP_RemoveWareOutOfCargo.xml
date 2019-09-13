@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<aiscript name="JP_DeliverLastWareInCargo" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="aiscripts.xsd">
+<aiscript name="JP_EmptyCargo" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="aiscripts.xsd">
 
-  <order id ="JP_DeliverLastWareInCargo" name="JP RemoveWareOutOfCargo" description="delivers the last ware in cargo bay to an given target" category="internal" infinite="false">
+  <order id ="JP_EmptyCargo" name="JP EmptyCargo" description="removes a ware out of the cargo bay" category="internal" infinite="false">
     <params>
       <param name="SHIP" type="internal" default="null"/>
-      <param name="TARGERT" type="internal" default="null"/>
+      <param name="HOME" type="internal" default="null"/>
       <param name="DEBUG" type="internal" default="false"/>
     </params>
   </order>
@@ -25,17 +25,12 @@
       <do_if value="$SHIP.cargo.count gt 0">
         <set_value name="$Ware" exact="$SHIP.cargo.list.last"/>
         <set_value name="$WareAmount" exact="$SHIP.cargo.{$SHIP.cargo.list.last}.count"/>
-        <create_trade_offer buyer="$TARGERT" object="$TARGERT" playeronly="true" price="0Cr" ware="$Ware" amount="$WareAmount" name="$TradeOffer"/>
+        <create_trade_offer buyer="$HOME" object="$HOME" playeronly="true" price="0Cr" ware="$Ware" amount="$WareAmount" name="$TradeOffer"/>
         <create_trade_order object="$SHIP" tradeoffer="$TradeOffer" amount="$WareAmount"/>
         <remove_value name="$TradeOffer"/>
         <remove_value name="$WareAmount"/>
         <remove_value name="$Ware"/>
       </do_if>
-      <do_else>
-        <do_if value="$DEBUG">
-          <debug_text text="'No wares in cargo bay'"/>
-        </do_if>
-      </do_else>
 
       <label name="FINISH"/>
       <wait exact="1ms"/>

@@ -44,6 +44,8 @@
   <attention min="unknown">
     <actions>
 
+      <debug_text text="'FIRST_LINE'"/>
+
       <wait exact="1ms"/>
       <label name="START"/>
       <set_value name="$Running" exact="true"/>
@@ -57,7 +59,22 @@
         </run_script>
       </do_if>
 
-      <label name="$RESUME"/>
+      <label name="RESUME"/>
+
+      <!-- Empty cargo when full and enabled -->
+      <do_if value="$EMPTYING_CARGO_AT_HOME_STATION and $HOME_STATION.isplayerowned and $Ship.cargo.free.container lt ($Ship.cargo.capacity.container * 0.1) or $Emptying">
+        <do_if value="$Ship.cargo.count gt 0">
+          <run_script name="'JP_EmptyCargo'">
+            <param name="SHIP" value="$Ship"/>
+            <param name="HOME" value="$HOME_STATION"/>
+            <param name="DEBUG" value="$DEBUG"/>
+          </run_script>
+        </do_if>
+        <do_else>
+          <set_value name="$Emptying" exact="false"/>
+          <resume label="RESUME"/>
+        </do_else>
+      </do_if>
 
       <create_list name="$DroppedCargo"/>
       <create_list name="$DroppedCargoSorted"/>
@@ -155,16 +172,6 @@
           <debug_text text="'Nothing found to collect or Cargo bay is full.'"/>
         </do_if>
       </do_else>
-
-      <do_if value="$EMPTYING_CARGO_AT_HOME_STATION and $HOME_STATION.isplayerowned">
-        <do_if value="$Ship.cargo.free.container lt ($Ship.cargo.capacity.container * 0.1)">
-          <run_script name="'JP_EmptyCargo'">
-            <param name="SHIP" value="$Ship"/>
-            <param name="HOME" value="$HOME_STATION"/>
-            <param name="DEBUG" value="$DEBUG"/>
-          </run_script>
-        </do_if>
-      </do_if>
 
       <remove_value name="$DroppedCargoSorted"/>
       <do_if value="not $INFINITE">
