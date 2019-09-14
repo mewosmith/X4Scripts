@@ -78,6 +78,9 @@
           <run_script name="'JP_HasUnknownObjects'">
             <param name="SHIP" value="$Ship"/>
             <param name="SECTOR" value="$Sectors.{$_it}"/>
+            <param name="EXPLORE_GATES" value="$EXPLORE_GATES"/>
+            <param name="EXPLORE_STATIONS" value="$EXPLORE_STATIONS"/>
+            <param name="EXPLORE_DATAVAULTS" value="$EXPLORE_DATAVAULT"/>
             <param name="EXPLORE_ENEMY_STATIONS" value="$EXPLORE_ENEMY_STATIONS"/>
             <param name="DEBUG" value="$DEBUG"/>
             <save_retval name="HAS_UNKNOWN_OBJECTS" variable="$HasUnknownObjects" />

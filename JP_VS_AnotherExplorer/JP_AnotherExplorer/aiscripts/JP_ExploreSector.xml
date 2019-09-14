@@ -169,7 +169,7 @@
           <wait exact="1ms"/>
         </do_if>
         <do_else>
-          <debug_text text="'No DataVault here...'"/>
+          <debug_text text="'No DataVault here...\n'"/>
         </do_else>
       </do_if>
 

@@ -6,6 +6,9 @@
     <params>
       <param name="SHIP" type="internal" default="null"/>
       <param name="SECTOR" type="internal" default="null"/>
+      <param name="EXPLORE_GATES" type="internal" default="null"/>
+      <param name="EXPLORE_STATIONS" type="internal" default="null"/>
+      <param name="EXPLORE_DATAVAULTS" type="internal" default="null"/>
       <param name="EXPLORE_ENEMY_STATIONS" type="internal" default="null"/>
       <param name="DEBUG" type="internal" default="false"/>
     </params>
@@ -21,21 +24,31 @@
       <label name="START"/>
 
       <!-- Unknown Gates? -->
-      <find_gate name="$UnknownGates" space="$SECTOR" multiple="true">
-        <match knownto="$SHIP.owner" negate="true"/>
-      </find_gate>
-
-      <!-- Unknown Stations? -->
-      <do_if value="$EXPLORE_ENEMY_STATIONS">
-        <find_station name="$UnknownStations" space="$SECTOR" multiple="true">
+      <do_if value="$EXPLORE_GATES">
+        <find_gate name="$UnknownGates" space="$SECTOR" multiple="true">
           <match knownto="$SHIP.owner" negate="true"/>
-        </find_station>
+        </find_gate>
       </do_if>
       <do_else>
-        <find_station name="$UnknownStations" space="$SECTOR" multiple="true">
-          <match knownto="$SHIP.owner" negate="true"/>
-          <match mayattack="$SHIP" negate="true"/>
-        </find_station>
+        <create_list name="$UnknownGates" exact="0"/>
+      </do_else>
+
+      <!-- Unknown Stations? -->
+      <do_if value="$EXPLORE_STATIONS">
+        <do_if value="$EXPLORE_ENEMY_STATIONS">
+          <find_station name="$UnknownStations" space="$SECTOR" multiple="true">
+            <match knownto="$SHIP.owner" negate="true"/>
+          </find_station>
+        </do_if>
+        <do_else>
+          <find_station name="$UnknownStations" space="$SECTOR" multiple="true">
+            <match knownto="$SHIP.owner" negate="true"/>
+            <match mayattack="$SHIP" negate="true"/>
+          </find_station>
+        </do_else>
+      </do_if>
+      <do_else>
+        <create_list name="$UnknownStations" exact="0"/>
       </do_else>
 
       <!-- Unknown DataVault? -->
