@@ -132,7 +132,7 @@
     <Xml Include="JP_AnotherFleetLogic\md\JP_AnotherFleetLogic.xml" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="JP_AnotherFleetLogic\JP_AnotherFleetLogic.lua" />
+    <None Include="JP_AnotherFleetLogic\aiscripts\JP_AnotherFleetLogic.lua" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

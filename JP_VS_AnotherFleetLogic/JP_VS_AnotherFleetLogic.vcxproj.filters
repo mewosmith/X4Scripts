@@ -28,6 +28,6 @@
     <Xml Include="JP_AnotherFleetLogic\content.xml" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="JP_AnotherFleetLogic\JP_AnotherFleetLogic.lua" />
+    <None Include="JP_AnotherFleetLogic\aiscripts\JP_AnotherFleetLogic.lua" />
   </ItemGroup>
 </Project>

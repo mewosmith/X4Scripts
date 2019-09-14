@@ -82,7 +82,7 @@
         </do_if>
         <do_if value="$EXPLORE_ENEMY_STATIONS">
           <find_station name="$Stations" space="$SECTOR" multiple="true">
-            <match knownto="$SHIP.owner" negate="true"/>
+            <match knownto="$SHIP" negate="true"/>
           </find_station>
         </do_if>
         <do_else>
