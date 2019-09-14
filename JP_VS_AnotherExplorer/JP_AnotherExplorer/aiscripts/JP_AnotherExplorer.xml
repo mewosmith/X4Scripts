@@ -18,7 +18,7 @@
       <param name="EXPLORE_ENEMY_STATIONS" required="false" type="bool" default="false" text="Explore Enemy Stations?"/>
       <param name="RESUPPLY_NAVBEACON" required="false" type="bool" default="true" text="Resupply NavBeacon?"/>
       <param name="RETURN_HOME" required="false" type="bool" default="true" text="Return Home?"/>
-      <param name="DEBUG" required="false" type="bool" default="false" text="Debug text" advanced="true"/>
+      <param name="DEBUG" required="false" type="bool" default="0" text="Debug text" advanced="true"/>
     </params>
     <skill min="0"/>
     <requires>

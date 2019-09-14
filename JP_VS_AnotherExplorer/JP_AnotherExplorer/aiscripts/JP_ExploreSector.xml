@@ -39,16 +39,19 @@
       </do_if>
 
       <!-- Explore Gates ~~~~~~~~~~~~~~~~~~~~~  -->
+      <label name="RESUME_EXPLORE_GATES"/>
       <do_if value="$EXPLORE_GATES">
-        <!-- Unknown Gates -->
-        <debug_text text="'Search for unknown Gates...'"/>
+        <!-- Search for unknown Gates -->
+        <do_if value="$DEBUG">
+          <debug_text text="'Search for unknown Gates...'"/>
+        </do_if>
         <find_gate name="$Gates" space="$SECTOR" multiple="true">
           <match knownto="$SHIP.owner" negate="true"/>
         </find_gate>
         <do_if value="$DEBUG">
           <debug_text text="'%1 unknown gates found'.[$Gates.count]"/>
         </do_if>
-        <do_while value="$Gates.count gt 0">
+        <do_if value="$Gates.count gt 0">
           <!-- Sort Gates list to the ship distance -->
           <run_script name="'JP_SortListByDistance'">
             <param name="LIST" value="$Gates"/>
@@ -61,6 +64,9 @@
           <!-- Explore logic -->
           <check_object object="$Gates.last" knownto="$SHIP.owner" result="$isKnown"/>
           <do_if value="not $isKnown">
+            <do_if value="$DEBUG">
+              <debug_text text="'Exploring Gate %1'.[$Gates.last.knownname]"/>
+            </do_if>
             <set_command command="command.movetozone" param="$Gates.last"/>
             <set_command_action commandaction ="commandaction.flyingto" param="$Gates.last"/>
             <run_script name="'move.generic'">
@@ -69,14 +75,18 @@
             </run_script>
           </do_if>
           <remove_value name="$isKnown"/>
-          <remove_from_list name="$Gates" exact="$Gates.last"/>
-        </do_while>
+          <do_if value="$DEBUG">
+            <debug_text text="'RESUME_EXPLORE_GATES\n'"/>
+          </do_if>
+          <resume label="RESUME_EXPLORE_GATES"/>
+        </do_if>
         <remove_value name="$Gates"/>
       </do_if>
 
       <!-- Explore Stations ~~~~~~~~~~~~~~~~~~~~~  -->
+      <label name="RESUME_EXPLORE_STATIONS"/>
       <do_if value="$EXPLORE_STATIONS">
-        <!-- Unknown Stations -->
+        <!-- Search for unknown Stations -->
         <do_if value="$DEBUG">
           <debug_text text="'Search for unknown Stations...'"/>
         </do_if>
@@ -94,7 +104,8 @@
         <do_if value="$DEBUG">
           <debug_text text="'%1 unknown stations found'.[$Stations.count]"/>
         </do_if>
-        <do_while value="$Stations.count gt 0">
+
+        <do_if value="$Stations.count gt 0">
           <!-- Sort Stations list to the ship distance -->
           <run_script name="'JP_SortListByDistance'">
             <param name="LIST" value="$Stations"/>
@@ -107,6 +118,9 @@
           <!-- Explore logic -->
           <check_object object="$Stations.last" knownto="$SHIP.owner" result="$isKnown"/>
           <do_if value="not $isKnown">
+            <do_if value="$DEBUG">
+              <debug_text text="'Exploring Station %1'.[$Stations.last.knownname]"/>
+            </do_if>
             <set_command command="command.movetozone" param="$Stations.last"/>
             <set_command_action commandaction ="commandaction.flyingto" param="$Stations.last"/>
             <run_script name="'move.generic'">
@@ -115,8 +129,11 @@
             </run_script>
           </do_if>
           <remove_value name="$isKnown"/>
-          <remove_from_list name="$Stations" exact="$Stations.last"/>
-        </do_while>
+          <do_if value="$DEBUG">
+            <debug_text text="'RESUME_EXPLORE_STATIONS\n'"/>
+          </do_if>
+          <resume label="RESUME_EXPLORE_STATIONS"/>
+        </do_if>
         <remove_value name="$Stations"/>
       </do_if>
 
