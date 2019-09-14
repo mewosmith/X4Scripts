@@ -34,6 +34,8 @@
   <attention min="unknown">
     <actions>
 
+      <wait exact="1ms"/>
+
       <do_if value="$DEBUG">
         <debug_text text="'Exploring Sector %1 [%2]'.[$SECTOR.knownname, $SECTOR.owner.knownname]"/>
       </do_if>
@@ -59,6 +61,7 @@
             <param name="DEBUG" value="$DEBUG"/>
             <save_retval name="SORTED_LIST" variable="$SortedList"/>
           </run_script>
+          <wait exact="1ms"/>
           <set_value name="$Gates" exact="$SortedList"/>
           <remove_value name="$SortedList"/>
           <!-- Explore logic -->
@@ -71,8 +74,8 @@
             <set_command_action commandaction ="commandaction.flyingto" param="$Gates.last"/>
             <run_script name="'move.generic'">
               <param name="destination" value="$Gates.last" />
-              <param name="endintargetzone" value="true"/>
             </run_script>
+            <wait exact="1ms"/>
           </do_if>
           <remove_value name="$isKnown"/>
           <do_if value="$DEBUG">
@@ -81,6 +84,9 @@
           <resume label="RESUME_EXPLORE_GATES"/>
         </do_if>
         <remove_value name="$Gates"/>
+      </do_if>
+      <do_if value="$DEBUG">
+        <debug_text text="'~~~~~~~~~~~~~~~~~~~~~~~~\n'"/>
       </do_if>
 
       <!-- Explore Stations ~~~~~~~~~~~~~~~~~~~~~  -->
@@ -113,6 +119,7 @@
             <param name="DEBUG" value="$DEBUG"/>
             <save_retval name="SORTED_LIST" variable="$SortedList"/>
           </run_script>
+          <wait exact="1ms"/>
           <set_value name="$Stations" exact="$SortedList"/>
           <remove_value name="$SortedList"/>
           <!-- Explore logic -->
@@ -125,8 +132,8 @@
             <set_command_action commandaction ="commandaction.flyingto" param="$Stations.last"/>
             <run_script name="'move.generic'">
               <param name="destination" value="$Stations.last" />
-              <param name="endintargetzone" value="true"/>
             </run_script>
+            <wait exact="1ms"/>
           </do_if>
           <remove_value name="$isKnown"/>
           <do_if value="$DEBUG">
@@ -135,6 +142,9 @@
           <resume label="RESUME_EXPLORE_STATIONS"/>
         </do_if>
         <remove_value name="$Stations"/>
+      </do_if>
+      <do_if value="$DEBUG">
+        <debug_text text="'~~~~~~~~~~~~~~~~~~~~~~~~\n'"/>
       </do_if>
 
       <!-- Explore DataVault -->
@@ -147,15 +157,20 @@
           <param name="DEBUG" value="$DEBUG"/>
           <save_retval name="DATA_VAULT" variable="$DataVault"/>
         </run_script>
+        <wait exact="1ms"/>
         <do_if value="$DataVault != null">
+          <debug_text text="'Exploring DataVault...'"/>
           <run_script name="'JP_ExploreDataVault'">
             <param name="SHIP" value="$SHIP"/>
             <param name="SECTOR" value="$SECTOR"/>
-            <!-- TODO: Make RESUPPLY_NAVBEACON toggleable -->
             <param name="RESUPPLY_NAVBEACON" value="$RESUPPLY_NAVBEACON"/>
             <param name="DEBUG" value="true"/>
           </run_script>
+          <wait exact="1ms"/>
         </do_if>
+        <do_else>
+          <debug_text text="'No DataVault here...'"/>
+        </do_else>
       </do_if>
 
       <wait exact="1ms"/>
