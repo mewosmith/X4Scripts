@@ -54,6 +54,9 @@
 
       <do_if value="$ENTIRE_GALAXY">
 
+        <do_if value="$DEBUG">
+          <debug_text text="'Beginn exploring...\n'"/>
+        </do_if>
         <!-- Find Sectors -->
         <create_list name="$Sectors"/>
         <do_if value="$EXPLORE_ENEMY_SECTORS">
@@ -65,11 +68,11 @@
           </find_sector>
         </do_else>
         <do_if value="$DEBUG">
-          <debug_text text="'Found Sectors'"/>
+          <debug_text text="'Found Sectors: {%1}'.[$Sectors.count]"/>
           <do_all exact="$Sectors.count" counter="$_it">
             <debug_text text="'%1 [%2]'.[$Sectors.{$_it}.knownname, $Sectors.{$_it}.owner.knownname]"/>
           </do_all>
-          <debug_text text="'  ~~~~~~~~~~~~~~~~~  '"/>
+          <debug_text text="'  ~~~~~~~~~~~~~~~~~  \n'"/>
         </do_if>
 
         <!-- Remove all sectors where all objects are discoverd -->
@@ -93,11 +96,11 @@
         <remove_from_list name="$Sectors" list="$SectorsToRemove"/>
         <remove_value name="$SectorsToRemove"/>
         <do_if value="$DEBUG">
-          <debug_text text="'Sectors with unknown objects'"/>
+          <debug_text text="'Sectors with unknown objects: {%1}'.[$Sectors.count]"/>
           <do_all exact="$Sectors.count" counter="$_it">
             <debug_text text="'%1 [%2]'.[$Sectors.{$_it}.knownname, $Sectors.{$_it}.owner.knownname]"/>
           </do_all>
-          <debug_text text="'  ~~~~~~~~~~~~~~~~~  '"/>
+          <debug_text text="'  ~~~~~~~~~~~~~~~~~  \n'"/>
         </do_if>
 
         <do_if value="$Sectors.count gt 0">
@@ -168,9 +171,9 @@
 
       <!-- All done ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
       <do_if value="$DEBUG">
-        <debug_text text="'Explorer %1 ~~ %2 is done with the work'.[$Ship.name, $Ship.idcode]"/>
+        <debug_text text ="'~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'"/>
+        <debug_text text="'Explorer %1 ~~ %2 is done with the work\n'.[$Ship.name, $Ship.idcode]" filter ="general"/>
       </do_if>
-
       <label name="FINISH"/>
       <remove_value name="$Ship"/>
       <remove_value name="$Running"/>

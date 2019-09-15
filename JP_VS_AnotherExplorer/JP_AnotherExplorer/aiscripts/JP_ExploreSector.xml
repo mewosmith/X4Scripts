@@ -37,7 +37,7 @@
       <wait exact="1ms"/>
 
       <do_if value="$DEBUG">
-        <debug_text text="'Exploring Sector %1 [%2]'.[$SECTOR.knownname, $SECTOR.owner.knownname]"/>
+        <debug_text text="'Exploring Sector %1 [%2]\n'.[$SECTOR.knownname, $SECTOR.owner.knownname]"/>
       </do_if>
 
       <!-- Explore Gates ~~~~~~~~~~~~~~~~~~~~~  -->
@@ -85,6 +85,9 @@
         </do_if>
         <remove_value name="$Gates"/>
       </do_if>
+      <do_else>
+        <debug_text text="'Exploring of Gates turned off.'"/>
+      </do_else>
       <do_if value="$DEBUG">
         <debug_text text="'~~~~~~~~~~~~~~~~~~~~~~~~\n'"/>
       </do_if>
@@ -143,6 +146,9 @@
         </do_if>
         <remove_value name="$Stations"/>
       </do_if>
+      <do_else>
+        <debug_text text="'Exploring of Stations turned off.'"/>
+      </do_else>
       <do_if value="$DEBUG">
         <debug_text text="'~~~~~~~~~~~~~~~~~~~~~~~~\n'"/>
       </do_if>
@@ -172,7 +178,10 @@
           <debug_text text="'No DataVault here...\n'"/>
         </do_else>
       </do_if>
-
+      <do_else>
+        <debug_text text="'Exploring of DataVaults turned off.'"/>
+      </do_else>
+      
       <wait exact="1ms"/>
     </actions>
   </attention>

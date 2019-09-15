@@ -84,7 +84,7 @@
             </run_script>
             <!-- Deploy a Navbeacon -->
             <do_if value="$DEBUG">
-              <debug_text text="'Deploying Navbeacon...'"/>
+              <debug_text text="'Deploying Navbeacon...\n'"/>
             </do_if>
             <launch_navbeacon object="$SHIP" category="deployablecategory.navbeacon" name="$NavBeacon"/>
             <set_object_name object="$NavBeacon" name="'%1  ~~  [%2]'.[{20109,8901}, $NavBeacon.sector.knownname]"/>

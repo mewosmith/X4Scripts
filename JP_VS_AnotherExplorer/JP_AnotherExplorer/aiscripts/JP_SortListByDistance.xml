@@ -34,7 +34,7 @@
       </do_while>
 
       <do_if value="$DEBUG">
-        <debug_text text="'SortedList values:'"/>
+        <debug_text text="'SortedList values: {%1}'.[$SortedList.count]"/>
         <do_all exact="$SortedList.count" counter="$_it" reverse="true">
           <debug_text text="'%1  ~~  %2'.[$OBJECT.distanceto.{$SortedList.{$_it}}, $SortedList.{$_it}.knownname]"/>
         </do_all>
