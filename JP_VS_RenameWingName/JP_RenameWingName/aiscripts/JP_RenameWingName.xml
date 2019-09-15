@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<aiscript name="JP_RenameWingName" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="aiscripts.xsd" version="1">
+
+  <order id="JP_RenameWingName" name="JP RenameWingName" category="navigation" infinite="true">
+    <params>
+      <param name="DEBUG" type="bool" advanced="1" default="0" text="DebugText"/>
+    </params>
+    <skill min="0"/>
+    <requires>
+      <match shiptype="shiptype.lasertower" negate="true"/>
+    </requires>
+  </order>
+
+  <interrupts>
+    <handler ref="JobRemoveRequestHandler" />
+  </interrupts>
+
+  <init>
+  </init>
+
+  <attention min="unknown">
+    <actions>
+
+      <wait exact="1ms"/>
+      <label name="START"/>
+
+      <do_if value="$DEBUG">
+        <debug_text text="'%1 [%2]  ~~  Is Wing Commander %3'.[this.ship.name, this.ship.idcode, this.ship.wing.iscommander]"/>
+      </do_if>
+      <do_if value="this.ship.wing.iscommander">
+        <do_if value="$DEBUG">
+          <debug_text text="'Renames the wing to %1\n'.[this.ship.name]"/>
+        </do_if>
+        <cancel_all_orders object="this.ship"/>
+        <set_object_wing_name object="this.ship" name="this.ship.name"/>
+      </do_if>
+      <do_else>
+        <do_if value="$DEBUG">
+          <debug_text text="'No wing here that we could rename.\n'"/>
+        </do_if>
+      </do_else>
+
+      <label name="FINISH"/>
+      <set_order_syncpoint_reached order="this.ship.order"/>
+      <cancel_order order="this.ship.order" />
+      <wait exact="1ms"/>
+
+    </actions>
+  </attention>
+
+  <on_abort>
+  </on_abort>
+
+</aiscript>
