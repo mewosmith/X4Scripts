@@ -37,12 +37,11 @@
       <label name="START"/>
       <cancel_all_orders object="this.ship"/>
 
-      <run_script name="'JP_ExploreDataVault'">
-        <param name="SHIP" value="this.ship"/>
-        <param name="SECTOR" value="$OBJECT"/>
-        <param name="RESUPPLY_NAVBEACON" value="true"/>
-        <param name="DEBUG" value="true"/>
-      </run_script>
+      <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+      <set_object_wing_name object="this.ship" name="this.ship.name"/>
+      
+      <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
 
       <label name="FINISH"/>
       <set_order_syncpoint_reached order="this.ship.order"/>

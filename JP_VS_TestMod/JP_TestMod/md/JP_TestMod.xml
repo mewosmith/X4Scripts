@@ -7,7 +7,7 @@
       <conditions>
       </conditions>
       <actions>
-        <trigger_autosave/>
+        <!--<trigger_autosave/>-->
       </actions>
     </cue>
 
