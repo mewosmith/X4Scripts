@@ -170,7 +170,7 @@
             <param name="SHIP" value="$SHIP"/>
             <param name="SECTOR" value="$SECTOR"/>
             <param name="RESUPPLY_NAVBEACON" value="$RESUPPLY_NAVBEACON"/>
-            <param name="DEBUG" value="true"/>
+            <param name="DEBUG" value="$DEBUG"/>
           </run_script>
           <wait exact="1ms"/>
         </do_if>

@@ -71,6 +71,12 @@
             <remove_value name="$AmmoTable"/>
             <remove_value name="$Stations"/>
           </do_if>
+          <do_else>
+            <do_if value="$DEBUG">
+              <debug_text text="'Resupplying of navbeacons turned off and no navbeacons in cargo bay.'"/>
+            </do_if>
+            <show_help custom="'AnotherExplorer: Resupplying of navbeacons turned off and no navbeacons in cargo bay.'"/>
+          </do_else>
 
           <!-- If no navbeacon is there -->
           <do_if value="$SHIP.ammostorage.{deployablecategory.navbeacon}.count gt 0">

@@ -51,21 +51,27 @@
         <create_list name="$UnknownStations" exact="0"/>
       </do_else>
 
-      <!-- Unknown DataVault? -->
-      <set_value name="$UnknownDataVault"/>
-      <run_script name="'JP_IsDataVaultHere'">
-        <param name="SECTOR" value="$SECTOR"/>
-        <param name="DEBUG" value="$DEBUG"/>
-        <save_retval name="DATA_VAULT" variable="$DataVault" />
-      </run_script>
+      <do_if value="$EXPLORE_DATAVAULTS">
 
-      <do_if value="$DataVault != null">
-        <!-- Is a navbeacon besides the DataVault? -->
-        <find_object name="$NavBeacon" space="$DataVault.zone">
-          <match class="class.navbeacon"/>
-        </find_object>
-        <set_value name="$UnknownDataVault" exact="if $NavBeacon == null then true else false"/>
-        <remove_value name="$NavBeacon"/>
+        <!-- Unknown DataVault? -->
+        <set_value name="$UnknownDataVault"/>
+        <run_script name="'JP_IsDataVaultHere'">
+          <param name="SECTOR" value="$SECTOR"/>
+          <param name="DEBUG" value="$DEBUG"/>
+          <save_retval name="DATA_VAULT" variable="$DataVault" />
+        </run_script>
+
+        <do_if value="$DataVault != null">
+          <!-- Is a navbeacon besides the DataVault? -->
+          <find_object name="$NavBeacon" space="$DataVault.zone">
+            <match class="class.navbeacon"/>
+          </find_object>
+          <set_value name="$UnknownDataVault" exact="if $NavBeacon == null then true else false"/>
+          <remove_value name="$NavBeacon"/>
+        </do_if>
+        <do_else>
+          <set_value name="$UnknownDataVault" exact="false"/>
+        </do_else>
       </do_if>
       <do_else>
         <set_value name="$UnknownDataVault" exact="false"/>
