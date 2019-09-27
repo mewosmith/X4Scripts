@@ -10,14 +10,20 @@
         <input_param name="max" value="6"/>
         <input_param name="step" value="1"/>
       </param>
+      <!-- What should the renamed name look like? -->
       <param name="USE_CLASS_NAME" type="bool" text="Class?" default="true"/>
       <param name="USE_MODEL_NAME" type="bool" text="Model Name?" default="true"/>
       <param name="USE_TYPE_NAME" type="bool" text="Typ?" default="true"/>
       <param name="USE_SHORT_MODEL_NAME" type="bool" text="Short Model Name?" default="true"/>
       <param name="USE_SUBFLEETS" type="bool" text="Rename sub fleets?" default="false"/>
-      <param name="USE_OWN_FRONT_TAG" type="bool" text="Use own tag at Front?" default="false" />
-      <param name="USE_OWN_BACK_TAG" type="bool" text="Use own tag at Back?" default="false"/>
+      <!-- Own tag -->
+      <param name="USE_TAG_AT_FRONT" type="bool" text="Use own tag at the front?" default="false" />
+      <param name="USE_TAG_AT_END" type="bool" text="Use own tag at the end?" default="false"/>
+      <param name="USED_OBJECT_FOR_TAG" type="object" text="Used object for the tag" default="this.ship"/>
+      <!-- Own name for all ships -->
       <param name="USE_OWN_NAME" type="bool" text="Use own name?" default="false"/>
+      <param name="USED_OBJECT_FOR_OWN_NAME" type="object" text="Used object for the own name" default="this.ship"/>
+      <!-- Numbering (actual not sorted) can looking weird -->
       <param name="USE_NUMBERS" type="bool" text="Use Numbers?" default="false"/>
     </params>
     <skill min="0"/>
@@ -42,13 +48,16 @@
   <init>
     <set_value name="$Ship" exact="this.ship"/>
     <set_value name="$Subordinates" exact="(if ($USE_SUBFLEETS) then $Ship.allsubordinates else 0)"/>
-    <set_value name="$OwnTagString" exact="(if ($USE_OWN_FRONT_TAG or $USE_OWN_BACK_TAG) then $Ship.name else '')"/>
-    <set_value name="$OwnNameString" exact="(if ($USE_OWN_NAME) then $Ship.name else '')"/>
+    <set_value name="$OwnTagString" exact="(if ($USE_TAG_AT_FRONT or $USE_TAG_AT_END) then $USED_OBJECT_FOR_TAG.name else '')"/>
+    <set_value name="$OwnNameString" exact="(if ($USE_OWN_NAME) then $USED_OBJECT_FOR_OWN_NAME.name else '')"/>
   </init>
 
   <attention min="unknown">
     <actions>
 
+      <wait exact="1ms"/>
+      <label name="START"/>
+      
       <!-- Rename sub Fleets -->
       <do_if value="$USE_SUBFLEETS">
         <do_all exact="$Subordinates.count" counter="$_it">
@@ -61,8 +70,8 @@
                 <param name="USE_TYPE_NAME" value="$USE_TYPE_NAME"/>
                 <param name="USE_SHORT_MODEL_NAME" value="$USE_SHORT_MODEL_NAME"/>
                 <param name="OWN_TAG_STRING" value="$OwnTagString"/>
-                <param name="USE_OWN_FRONT_TAG" value="$USE_OWN_FRONT_TAG"/>
-                <param name="USE_OWN_BACK_TAG" value="$USE_OWN_BACK_TAG"/>
+                <param name="USE_OWN_FRONT_TAG" value="$USE_TAG_AT_FRONT"/>
+                <param name="USE_OWN_BACK_TAG" value="$USE_TAG_AT_END"/>
                 <param name="OWN_NAME_STRING" value="$OwnNameString"/>
                 <param name="USE_OWN_NAME" value="$USE_OWN_NAME"/>
                 <param name="USED_VARIANT" value="$NAME_VARINAT"/>
@@ -73,7 +82,7 @@
         </do_all>
       </do_if>
 
-      <!-- Rename Fleet -->
+      <!-- Rename the whole fleet -->
       <run_script name="'JP_RenameFleet'">
         <param name="LEADER_SHIP" value="$Ship"/>
         <param name="USE_CLASS_NAME" value="$USE_CLASS_NAME"/>
@@ -81,15 +90,15 @@
         <param name="USE_TYPE_NAME" value="$USE_TYPE_NAME"/>
         <param name="USE_SHORT_MODEL_NAME" value="$USE_SHORT_MODEL_NAME"/>
         <param name="OWN_TAG_STRING" value="$OwnTagString"/>
-        <param name="USE_OWN_FRONT_TAG" value="$USE_OWN_FRONT_TAG"/>
-        <param name="USE_OWN_BACK_TAG" value="$USE_OWN_BACK_TAG"/>
+        <param name="USE_OWN_FRONT_TAG" value="$USE_TAG_AT_FRONT"/>
+        <param name="USE_OWN_BACK_TAG" value="$USE_TAG_AT_END"/>
         <param name="OWN_NAME_STRING" value="$OwnNameString"/>
         <param name="USE_OWN_NAME" value="$USE_OWN_NAME"/>
         <param name="USED_VARIANT" value="$NAME_VARINAT"/>
         <param name="USE_NUMBERS_TAG" value="$USE_NUMBERS"/>
       </run_script>
 
-      <!-- Rename initial Leader Ship -->
+      <!-- Rename the leader ship -->
       <run_script name="'JP_RenameShip'">
         <param name="SHIP" value="$Ship"/>
         <param name="USE_CLASS_NAME" value="$USE_CLASS_NAME"/>
@@ -97,18 +106,20 @@
         <param name="USE_TYPE_NAME" value="$USE_TYPE_NAME"/>
         <param name="USE_SHORT_MODEL_NAME" value="$USE_SHORT_MODEL_NAME"/>
         <param name="OWN_TAG_STRING" value="$OwnTagString"/>
-        <param name="USE_OWN_FRONT_TAG" value="$USE_OWN_FRONT_TAG"/>
-        <param name="USE_OWN_BACK_TAG" value="$USE_OWN_BACK_TAG"/>
+        <param name="USE_OWN_FRONT_TAG" value="$USE_TAG_AT_FRONT"/>
+        <param name="USE_OWN_BACK_TAG" value="$USE_TAG_AT_END"/>
         <param name="OWN_NAME_STRING" value="$OwnNameString"/>
         <param name="USE_OWN_NAME" value="$USE_OWN_NAME"/>
         <param name="USED_VARIANT" value="$NAME_VARINAT"/>
       </run_script>
 
+      <label name="CLEANING"/>
       <remove_value name="$OwnNameString"/>
       <remove_value name="$OwnTagString"/>
       <remove_value name="$Subordinates"/>
       <remove_value name="$Ship"/>
-      
+
+      <label name="FINISH"/>
       <set_order_syncpoint_reached order="this.ship.order"/>
       <cancel_order order="this.ship.order" />
       <wait exact="1ms"/>
