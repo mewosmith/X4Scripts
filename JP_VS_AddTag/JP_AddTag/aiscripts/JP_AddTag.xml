@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<aiscript name="JP_AddTag" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="aiscripts.xsd" version="1">
+
+  <order id="JP_AddTag" name="JP AddTag" category="navigation" description="Adds an tag to the object" infinite="true">
+    <params>
+      <param name="AT_FRONT" text="Tag at the front?" type="bool" default="true"/>
+      <param name="AT_END" text="Tag at the end?" type="bool" default="false"/>
+      <param name="WHOLE_FLEET" text="Whole Fleet?" type="bool" default="false"/>
+      <param name="OBJECT_WITH_TAG_AS_NAME" text="Object with tag as name" type="object" required="true"/>
+      <param name="DEBUG" text="Debug" type="bool" default="false" advanced="true"/>
+    </params>
+    <skill min="0"/>
+    <requires>
+      <match shiptype="shiptype.lasertower" negate="true"/>
+    </requires>
+  </order>
+
+  <interrupts>
+    <handler ref="SectorChangeHandler"/>
+    <handler ref="TargetInvalidHandler"/>
+    <handler ref="AttackHandler"/>
+    <handler ref="MissileLockHandler" />
+    <handler ref="ScannedHandler"/>
+    <handler ref="InspectedHandler"/>
+    <handler ref="FoundAbandonedHandler"/>
+    <handler ref="FoundLockboxHandler"/>
+    <handler ref="ResupplyHandler"/>
+    <handler ref="JobRemoveRequestHandler" />
+  </interrupts>
+
+  <init>
+  </init>
+
+  <attention min="unknown">
+    <actions>
+
+      <wait exact="1ms"/>
+      <label name="START"/>
+      <cancel_all_orders object="this.ship"/>
+
+      <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+      <set_value name="$Ship" exact="this.ship"/>
+      <set_value name="$Tag" exact="$OBJECT_WITH_TAG_AS_NAME.name"/>
+
+      <do_if value="$WHOLE_FLEET">
+        <set_value name="$Subordinates" exact="$Ship.allsubordinates"/>
+        <do_all exact="$Subordinates.count" counter="$_it">
+          <do_if value="$Subordinates.{$_it}.type" list="[shiptype.smalldrone, shiptype.xsdrone]" negate="true">
+            <set_object_name object="$Subordinates.{$_it}" name="'%1 %2 %3'.[(if $AT_FRONT then $Tag else ''), $Subordinates.{$_it}.name, (if $AT_END then $Tag else '') ]"/>
+          </do_if>
+        </do_all>
+        <set_object_name object="$Ship" name="'%1 %2 %3'.[(if $AT_FRONT then $Tag else ''), $Ship.name, (if $AT_END then $Tag else '') ]"/>
+        <remove_value name="$Subordinates"/>
+      </do_if>
+      <do_else>
+        <set_object_name object="$Ship" name="'%1 %2 %3'.[(if $AT_FRONT then $Tag else ''), $Ship.name, (if $AT_END then $Tag else '') ]"/>
+      </do_else>
+
+      <remove_value name="$Tag"/>
+      <remove_value name="$Ship"/>
+
+      <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+
+      <label name="FINISH"/>
+      <set_order_syncpoint_reached order="this.ship.order"/>
+      <cancel_order order="this.ship.order" />
+      <wait exact="1ms"/>
+
+    </actions>
+  </attention>
+
+</aiscript>
