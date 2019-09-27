@@ -4,6 +4,7 @@
 
   <order id="JP_RenameWingName" name="JP RenameWingName" category="navigation" infinite="true">
     <params>
+      <param name="USED_OBJECT_FOR_NAME" text="Used object for retrieving the name" type="object" default="this.ship"/>
       <param name="DEBUG" type="bool" advanced="1" default="0" text="DebugText"/>
     </params>
     <skill min="0"/>
@@ -25,21 +26,25 @@
       <wait exact="1ms"/>
       <label name="START"/>
 
+      <set_value name="$Ship" exact="this.ship"/>
+
       <do_if value="$DEBUG">
-        <debug_text text="'%1 [%2]  ~~  Is Wing Commander %3'.[this.ship.name, this.ship.idcode, this.ship.wing.iscommander]"/>
+        <debug_text text="'%1 [%2]  ~~  Is Wing Commander %3'.[$Ship.name, $Ship.idcode, $Ship.wing.iscommander]"/>
       </do_if>
-      <do_if value="this.ship.wing.iscommander">
+      <do_if value="$Ship.wing.iscommander">
         <do_if value="$DEBUG">
-          <debug_text text="'Renames the wing to %1\n'.[this.ship.name]"/>
+          <debug_text text="'Renames the wing to %1\n'.[$USED_OBJECT_FOR_NAME.name]"/>
         </do_if>
-        <cancel_all_orders object="this.ship"/>
-        <set_object_wing_name object="this.ship" name="this.ship.name"/>
+        <cancel_all_orders object="$Ship"/>
+        <set_object_wing_name object="$Ship" name="$USED_OBJECT_FOR_NAME.name"/>
       </do_if>
       <do_else>
         <do_if value="$DEBUG">
           <debug_text text="'No wing here that we could rename.\n'"/>
         </do_if>
       </do_else>
+
+      <remove_value name="$Ship"/>
 
       <label name="FINISH"/>
       <set_order_syncpoint_reached order="this.ship.order"/>
