@@ -4,9 +4,10 @@
 
   <order id="JP_TeleportShip" name="JP TeleportShip" category="navigation" infinite="true">
     <params>
-      <param name="destination" type="position" text="{1041, 10027}">
+      <param name="DESTINATION" type="position" text="{1041, 10027}">
         <input_param name="class" value="class.sector"/>
       </param>
+      <param name="WHOLE_FLEET" text="Whole Fleet?" type="bool" default="false"/>
       <param name="DEBUG" text="Debug" type="bool" default="false" advanced="true"/>
     </params>
     <skill min="0"/>
@@ -34,11 +35,34 @@
   <attention min="unknown">
     <actions>
 
+      <wait exact="1ms"/>
       <label name="START"/>
       <cancel_all_orders object="this.ship"/>
-      <warp object="this.object" sector="$destination.{1}">
-        <position x="$destination.{2}.x" y="$destination.{2}.y" z="$destination.{2}.z"/>
-      </warp>
+
+      <set_value name="$Leader" exact="this.ship"/>
+
+      <do_if value="$WHOLE_FLEET">
+        <set_value name="$Subordinates" exact="$Leader.allsubordinates"/>
+        <warp object="this.object" sector="$DESTINATION.{1}">
+          <position x="$DESTINATION.{2}.x" y="$DESTINATION.{2}.y" z="$DESTINATION.{2}.z"/>
+        </warp>
+        <wait exact="1ms"/>
+        <do_all exact="$Subordinates.count" counter="$_it">
+          <warp object="$Subordinates.{$_it}" sector="$DESTINATION.{1}">
+            <position object="$Leader"/>
+          </warp>
+          <wait exact="1ms"/>
+        </do_all>
+        <remove_value name="$Subordinates"/>
+      </do_if>
+      <do_else>
+        <warp object="this.object" sector="$DESTINATION.{1}">
+          <position x="$DESTINATION.{2}.x" y="$DESTINATION.{2}.y" z="$DESTINATION.{2}.z"/>
+        </warp>
+      </do_else>
+
+      <label name="CLEANUP"/>
+      <remove_value name="$Leader"/>
 
       <label name="FINISH"/>
       <set_order_syncpoint_reached order="this.ship.order"/>
